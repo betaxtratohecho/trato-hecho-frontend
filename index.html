@@ -1,174 +1,552 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trato Hecho - Escrow Descentralizado</title>
-    <!-- Tailwind CSS para el diseño visual -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Ethers.js para comunicación con MetaMask y Blockchain -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
-</head>
-<body class="bg-slate-900 text-slate-100 font-sans min-h-screen p-6">
-
-    <div class="max-w-2xl mx-auto p-6 bg-slate-800 rounded-2xl shadow-xl mt-6 border border-slate-700">
-        <!-- Encabezado -->
-        <div class="flex justify-between items-center mb-8 border-b border-slate-700 pb-4">
-            <div>
-                <h1 class="text-2xl font-bold text-emerald-400">Trato Hecho 🤝</h1>
-                <p class="text-xs text-slate-400">Plataforma de garantía segura (Escrow)</p>
-            </div>
-            <button id="btnConnect" onclick="connectWallet()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition">
-                Conectar Billetera
-            </button>
-        </div>
-
-        <!-- Estado de cuenta -->
-        <div class="mb-6 p-3 bg-slate-900 rounded-lg text-sm flex justify-between items-center">
-            <span class="text-slate-400">Estado:</span>
-            <span id="walletStatus" class="text-yellow-400 font-mono">Desconectado</span>
-        </div>
-
-        <!-- Formulario Crear Trato -->
-        <div class="space-y-4">
-            <h2 class="text-lg font-semibold text-slate-200">Crear y Garantizar Trato</h2>
-            
-            <div>
-                <label class="block text-xs text-slate-400 mb-1">Dirección del Contrato Escrow</label>
-                <input type="text" id="contractAddress" placeholder="0x..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:outline-none focus:border-emerald-500">
-            </div>
-
-            <div>
-                <label class="block text-xs text-slate-400 mb-1">ID del Trato (Bytes32)</label>
-                <input type="text" id="tratoId" value="0x0000000000000000000000000000000000000000000000000000000000000001" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:outline-none focus:border-emerald-500">
-            </div>
-
-            <div>
-                <label class="block text-xs text-slate-400 mb-1">Dirección del Comprador</label>
-                <input type="text" id="buyerAddress" placeholder="0x..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:outline-none focus:border-emerald-500">
-            </div>
-
-            <div>
-                <label class="block text-xs text-slate-400 mb-1">Dirección del Token (MockUSDC)</label>
-                <input type="text" id="tokenAddress" placeholder="0x..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:outline-none focus:border-emerald-500">
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-xs text-slate-400 mb-1">Monto de Garantía (Wei / Unidades)</label>
-                    <input type="text" id="amount" value="1000000000000000000" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:outline-none focus:border-emerald-500">
-                </div>
-                <div>
-                    <label class="block text-xs text-slate-400 mb-1">Plazo (Días)</label>
-                    <input type="number" id="days" value="20" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:outline-none focus:border-emerald-500">
-                </div>
-            </div>
-
-            <button onclick="crearTrato()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-semibold transition mt-4">
-                Bloquear Garantía y Crear Trato
-            </button>
-        </div>
-    </div>
-
-    <!-- Lógica Web3 integrada -->
-    <script>
-        let provider, signer, userAddress;
-
-        // ABIs mínimos para interactuar con los contratos
-        const abiEscrow = [
-            "function crearYGarantizarTrato(bytes32 _tratoId, address _comprador, address _token, uint256 _montoGarantia, uint256 _diasPlazo) external"
-        ];
-
-        async function connectWallet() {
-            if (window.ethereum) {
-                try {
-                    provider = new ethers.providers.Web3Provider(window.ethereum);
-                    await provider.send("eth_requestAccounts", []);
-                    signer = provider.getSigner();
-                    userAddress = await signer.getAddress();
-                    
-                    document.getElementById("walletStatus").innerText = userAddress.substring(0, 6) + "..." + userAddress.substring(38);
-                    document.getElementById("walletStatus").className = "text-emerald-400 font-mono";
-                    document.getElementById("btnConnect").innerText = "Conectado";
-                } catch (error) {
-                    console.error("Error conectando MetaMask:", error);
-                    alert("Error al conectar la billetera de MetaMask.");
-                }
-            } else {
-                alert("No se detectó MetaMask. Instala la extensión en tu navegador.");
-            }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trato Hecho — Custodia entre personas</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            yellow: '#FFD94D',
+            navy: '#16264A',
+            navy2: '#0F1B37',
+            blue: '#2F6FED',
+            bluedark: '#1E56D6',
+            ok: '#2FA84F',
+            danger: '#D64545'
+          }
         }
-
-        async function crearTrato() {
-            if (!signer) {
-                alert("Primero debes conectar tu billetera.");
-                return;
-            }
-
-            const escrowAddr = document.getElementById("contractAddress").value;
-            const tratoId = document.getElementById("tratoId").value;
-            const buyerAddr = document.getElementById("buyerAddress").value;
-            const tokenAddr = document.getElementById("tokenAddress").value;
-            const amount = document.getElementById("amount").value;
-            const days = document.getElementById("days").value;
-
-            if (!escrowAddr || !buyerAddr || !tokenAddr) {
-                alert("Por favor completa las direcciones del contrato, comprador y token.");
-                return;
-            }
-
-            try {
-                const escrowContract = new ethers.Contract(escrowAddr, abiEscrow, signer);
-                
-                // Llamada a la función en la blockchain
-                const tx = await escrowContract.crearYGarantizarTrato(
-                    tratoId,
-                    buyerAddr,
-                    tokenAddr,
-                    amount,
-                    days
-                );
-
-                alert("Transacción enviada. Esperando confirmación en la red...");
-                await tx.wait();
-                alert("¡Trato creado y garantía bloqueada con éxito!");
-            } catch (error) {
-                console.error(error);
-                alert("Ocurrió un error al ejecutar la transacción. Revisa la consola.");
-            }
-        }
-    </script>
-    <script>
-  let provider;
-  let signer;
-
-  async function connectWallet() {
-    // 1. Verifica si MetaMask está instalado en el navegador
-    if (typeof window.ethereum !== 'undefined') {
-      try {
-        // 2. Le pide a MetaMask que abra la ventana de conexión
-        await window.ethereum.request({ method: 'eth_requestAccounts' });
-        
-        // 3. Conecta Ethers.js con MetaMask
-        provider = new ethers.providers.Web3Provider(window.ethereum);
-        signer = provider.getSigner();
-        
-        // 4. Obtiene tu dirección de billetera
-        const address = await signer.getAddress();
-        
-        // 5. Actualiza los textos en tu página web
-        document.getElementById('walletStatus').innerText = "Conectado: " + address.substring(0, 6) + "..." + address.substring(38);
-        document.getElementById('walletStatus').classList.remove('text-yellow-400');
-        document.getElementById('walletStatus').classList.add('text-emerald-400');
-        document.getElementById('btnConnect').innerText = "Billetera Conectada";
-        
-      } catch (error) {
-        console.error("Conexión rechazada o error: ", error);
       }
-    } else {
-      alert("Por favor, instala la extensión MetaMask para usar esta plataforma.");
     }
   }
 </script>
+<style>
+  body{ font-family:'Inter',sans-serif; background:#F2F2F0; color:#242424; }
+  .font-mono{ font-family:'IBM Plex Mono',monospace; }
+  .field{
+    width:100%; background:#fff; border:1px solid #D4D4D1; border-radius:0.5rem;
+    padding:0.7rem 0.9rem; font-size:0.875rem; color:#242424; transition:all .15s;
+  }
+  .field:focus{ outline:none; border-color:#2F6FED; box-shadow:0 0 0 3px rgba(47,111,237,.15); }
+  .micro-label{ font-size:0.68rem; font-weight:600; color:#767676; text-transform:uppercase; letter-spacing:.03em; margin-bottom:0.35rem; display:block; }
+  .card{ background:#fff; border-radius:0.75rem; border:1px solid #E3E3E0; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+  .btn-primary{ background:#2F6FED; color:#fff; transition:background .15s; }
+  .btn-primary:hover{ background:#1E56D6; }
+  .btn-primary:disabled{ background:#A7BEEF; cursor:not-allowed; }
+  .btn-ghost{ border:1px solid #16264A; color:#16264A; background:#fff; transition:background .15s; }
+  .btn-ghost:hover{ background:rgba(22,38,74,.05); }
+  .case-pill{ transition:all .15s; }
+  .case-pill.active{ border-color:#2F6FED; color:#2F6FED; background:#EEF3FE; }
+  .case-pill:not(.active){ border-color:#D4D4D1; color:#767676; background:#fff; }
+  .step-dot{ width:9px; height:9px; border-radius:999px; background:#E3E3E0; }
+  .step-dot.done{ background:#2FA84F; }
+  .step-dot.current{ background:#2F6FED; box-shadow:0 0 0 4px rgba(47,111,237,.18); }
+  .seal{
+    width:100px; height:100px; border-radius:999px;
+    background:radial-gradient(circle at 35% 30%, #238A3E, #2FA84F 70%);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: 0 8px 20px rgba(47,168,79,.3), inset 0 0 0 4px rgba(255,255,255,.2);
+    transform:scale(0) rotate(-10deg); opacity:0;
+    transition: transform .5s cubic-bezier(.34,1.56,.64,1), opacity .3s;
+  }
+  .seal.stamped{ transform:scale(1) rotate(-4deg); opacity:1; }
+  canvas.firma{ touch-action:none; background:#fff; border:1px solid #D4D4D1; border-radius:0.5rem; }
+</style>
+</head>
+<body class="min-h-screen">
+
+  <!-- ENCABEZADO -->
+  <header class="sticky top-0 z-50 shadow-sm bg-brand-yellow">
+    <div class="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <svg width="30" height="30" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 24 L16 16 L22 20 L18 26 L12 30 Z" fill="#16264A"/>
+          <path d="M42 24 L32 16 L26 20 L30 26 L36 30 Z" fill="#2F6FED"/>
+          <rect x="20" y="21" width="8" height="7" rx="2" fill="#16264A"/>
+          <path d="M18 26 L22 30 Q24 32 26 30 L30 26" stroke="#16264A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <span class="text-sm font-bold tracking-tight block leading-none text-brand-navy">TRATO HECHO</span>
+          <span class="text-[10px] font-semibold block mt-1 tracking-wide uppercase text-brand-navy2 opacity-70">Custodia entre personas</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <span id="walletStatus" class="font-mono text-xs hidden sm:inline text-brand-navy opacity-70">Sin conectar</span>
+        <button id="btnConnect" onclick="connectWallet()" class="btn-primary px-3.5 py-2 rounded-md text-xs font-semibold">Conectar billetera</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-2xl mx-auto px-4 py-6 space-y-5">
+
+    <!-- CÓMO FUNCIONA -->
+    <div class="card p-4">
+      <p class="text-xs leading-relaxed text-zinc-600">
+        Dos personas, dos monedas, dos ciudades. Una deja su garantía en custodia dentro del contrato, la otra hace su parte,
+        y cuando ambas quedan conformes, <span class="text-brand-blue font-semibold">Trato Hecho libera el aval</span>.
+        El servicio no participa del intercambio en sí — solo custodia y deja constancia.
+      </p>
+    </div>
+
+    <!-- KYC -->
+    <div class="card p-5 sm:p-6">
+      <h1 class="text-base font-semibold text-zinc-900 mb-1">Verificación de identidad</h1>
+      <p class="text-xs text-zinc-500 mb-4">Vendedor y comprador necesitan verificar su identidad antes de crear un trato. Se hace una sola vez por wallet.</p>
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-xs font-medium text-zinc-700">Estado de tu wallet:</span>
+        <span id="kycStatus" class="font-mono text-xs px-2 py-0.5 rounded bg-zinc-100 text-zinc-600">sin verificar</span>
+      </div>
+      <div class="flex flex-col sm:flex-row gap-2">
+        <button onclick="iniciarKycDidit()" class="btn-primary flex-1 py-3 rounded-md text-xs font-semibold">Verificar identidad (DNI + selfie)</button>
+        <button onclick="chequearKyc()" class="btn-ghost flex-1 py-3 rounded-md text-xs font-semibold">Ya verifiqué, comprobar estado</button>
+      </div>
+    </div>
+
+    <!-- DECLARACIÓN JURADA -->
+    <div class="card p-5 sm:p-6">
+      <h2 class="text-base font-semibold text-zinc-900 mb-1">Declaración jurada</h2>
+      <p class="text-xs text-zinc-500 mb-3 leading-relaxed">
+        Declaro que la información que aporto para este trato es verdadera, que entiendo que Trato Hecho custodia una garantía y deja constancia de la operación, y que su función no reemplaza una instancia judicial ante un incumplimiento entre las partes.
+      </p>
+      <span class="micro-label">Firma</span>
+      <canvas id="firmaJurada" width="500" height="100" class="firma w-full mb-2"></canvas>
+      <button onclick="limpiarFirmaJurada()" class="text-xs text-brand-danger font-medium">Borrar firma</button>
+    </div>
+
+    <!-- DATOS DEL TRATO -->
+    <div class="card p-5 sm:p-6">
+      <h2 class="text-base font-semibold text-zinc-900 mb-1">Datos del trato</h2>
+      <p class="text-xs text-zinc-500 mb-4">Se completa una sola vez, antes de elegir cómo se entrega lo pactado.</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <span class="micro-label">Dirección del contrato Escrow</span>
+          <input type="text" id="contractAddress" placeholder="0x..." class="field font-mono">
+        </div>
+        <div>
+          <span class="micro-label">ID del trato (bytes32)</span>
+          <input type="text" id="tratoId" placeholder="0x000...001" class="field font-mono">
+        </div>
+        <div>
+          <span class="micro-label">Dirección de la contraparte</span>
+          <input type="text" id="buyerAddress" placeholder="0x..." class="field font-mono">
+        </div>
+        <div>
+          <span class="micro-label">Token de garantía</span>
+          <input type="text" id="tokenAddress" placeholder="0x..." class="field font-mono">
+        </div>
+        <div>
+          <span class="micro-label">Monto de garantía</span>
+          <input type="text" id="amount" placeholder="1000000000000000000" class="field font-mono">
+        </div>
+        <div>
+          <span class="micro-label">Plazo (días)</span>
+          <input type="number" id="days" value="20" class="field font-mono">
+        </div>
+        <div>
+          <span class="micro-label">Lo que ofrezco</span>
+          <input type="text" id="activoOfrecido" placeholder="Ej: 500.000 CLP en efectivo" class="field">
+        </div>
+        <div>
+          <span class="micro-label">Lo que pido a cambio</span>
+          <input type="text" id="activoSolicitado" placeholder="Ej: 620.000 ARS por transferencia" class="field">
+        </div>
+      </div>
+      <button onclick="crearTrato()" class="btn-primary w-full mt-5 py-3.5 rounded-md text-sm font-semibold shadow-sm">Bloquear garantía y crear trato</button>
+    </div>
+
+    <!-- SELECTOR DE CASOS -->
+    <div>
+      <span class="micro-label mb-2">Cómo se entrega lo pactado</span>
+      <div class="grid grid-cols-3 gap-2">
+        <button onclick="setCaso('a')" id="tabA" class="case-pill active py-3 px-2 text-[11px] font-semibold uppercase rounded-md border-2 text-center">Transferencia<br>+ envío</button>
+        <button onclick="setCaso('b')" id="tabB" class="case-pill py-3 px-2 text-[11px] font-semibold uppercase rounded-md border-2 text-center">Efectivo<br>por correo</button>
+        <button onclick="setCaso('c')" id="tabC" class="case-pill py-3 px-2 text-[11px] font-semibold uppercase rounded-md border-2 text-center">Encuentro<br>presencial</button>
+      </div>
+    </div>
+
+    <!-- CASO A -->
+    <div id="panelA" class="caso-panel card p-5 sm:p-6">
+      <h2 class="text-base font-semibold text-zinc-900 mb-1">Transferencia y envío postal</h2>
+      <p class="text-xs text-zinc-500 mb-5">El vendedor habilita la transferencia, la recibe, envía el paquete y el comprador confirma recepción.</p>
+
+      <div class="flex items-center gap-2 mb-5">
+        <div class="step-dot current" id="dotA1"></div><div class="step-dot" id="dotA2"></div>
+        <div class="step-dot" id="dotA3"></div><div class="step-dot" id="dotA4"></div>
+      </div>
+
+      <div class="space-y-2.5">
+        <button onclick="stepA(1)" class="w-full text-left border border-zinc-200 rounded-lg p-4 hover:bg-zinc-50 transition-all">
+          <span class="text-sm font-semibold text-zinc-900">① Habilitar transferencia</span>
+          <p class="text-xs text-zinc-500 mt-1">El vendedor confirma en el contrato que autoriza la transferencia en pesos del comprador.</p>
+        </button>
+        <button onclick="stepA(2)" class="w-full text-left border border-zinc-200 rounded-lg p-4 hover:bg-zinc-50 transition-all">
+          <span class="text-sm font-semibold text-zinc-900">② Transferencia recibida → generar etiqueta</span>
+          <p class="text-xs text-zinc-500 mt-1">Al confirmar el cobro, se genera la etiqueta con QR para pegar en el sobre/paquete.</p>
+        </button>
+        <button onclick="stepA(3)" class="w-full text-left border border-zinc-200 rounded-lg p-4 hover:bg-zinc-50 transition-all">
+          <span class="text-sm font-semibold text-zinc-900">③ Marcar envío despachado</span>
+          <p class="text-xs text-zinc-500 mt-1">Se registra el código de seguimiento del correo.</p>
+        </button>
+        <button onclick="stepA(4)" class="w-full text-left border border-zinc-200 rounded-lg p-4 hover:bg-zinc-50 transition-all">
+          <span class="text-sm font-semibold text-zinc-900">④ Confirmar recepción → liberar garantía</span>
+          <p class="text-xs text-zinc-500 mt-1">El comprador confirma que recibió los pesos chilenos. Se libera el aval.</p>
+        </button>
+      </div>
+
+      <div id="qrAreaA" class="hidden mt-5 p-5 rounded-lg bg-zinc-50 border border-zinc-200 text-center">
+        <p class="text-xs font-semibold text-zinc-700 mb-3">Etiqueta de envío — pegar en el paquete</p>
+        <div id="qrCodeA" class="flex justify-center"></div>
+        <p class="font-mono text-[10px] mt-3 text-zinc-500">Este QR valida despacho y entrega dentro de Trato Hecho</p>
+      </div>
+
+      <div id="trackingAreaA" class="hidden mt-4">
+        <span class="micro-label">Código de seguimiento del correo</span>
+        <input type="text" id="trackingCodeA" placeholder="Ej: CA123456789AR" class="field font-mono">
+        <button onclick="confirmarEnvioA()" class="btn-primary mt-3 px-4 py-2.5 rounded-md text-xs font-semibold">Registrar despacho</button>
+      </div>
+    </div>
+
+    <!-- CASO B -->
+    <div id="panelB" class="caso-panel hidden card p-5 sm:p-6">
+      <h2 class="text-base font-semibold text-zinc-900 mb-1">Efectivo por correo, en ambos sentidos</h2>
+      <p class="text-xs text-zinc-500 mb-5">Ninguna transferencia bancaria: cada parte envía billetes por correo a la otra.</p>
+
+      <div class="flex items-center gap-2 mb-5">
+        <div class="step-dot current" id="dotB1"></div><div class="step-dot" id="dotB2"></div>
+        <div class="step-dot" id="dotB3"></div>
+      </div>
+
+      <div class="grid sm:grid-cols-2 gap-3 mb-4">
+        <div class="border border-zinc-200 rounded-lg p-4">
+          <p class="text-sm font-semibold text-zinc-900 mb-2">Comprador → envía pesos argentinos</p>
+          <button onclick="generarQR('qrCodeB1','Envio-Comprador')" class="btn-ghost w-full py-2 rounded-md text-xs font-semibold mb-2">Generar etiqueta de envío</button>
+          <div id="qrCodeB1" class="flex justify-center my-2"></div>
+          <input type="text" id="trackingB1" placeholder="Código de correo" class="field font-mono text-xs mb-2">
+          <button onclick="registrarEnvioB('comprador')" class="btn-primary w-full py-2 rounded-md text-xs font-semibold">Registrar despacho</button>
+        </div>
+        <div class="border border-zinc-200 rounded-lg p-4">
+          <p class="text-sm font-semibold text-zinc-900 mb-2">Vendedor → envía pesos chilenos</p>
+          <button onclick="generarQR('qrCodeB2','Envio-Vendedor')" class="btn-ghost w-full py-2 rounded-md text-xs font-semibold mb-2">Generar etiqueta de envío</button>
+          <div id="qrCodeB2" class="flex justify-center my-2"></div>
+          <input type="text" id="trackingB2" placeholder="Código de correo" class="field font-mono text-xs mb-2">
+          <button onclick="registrarEnvioB('vendedor')" class="btn-primary w-full py-2 rounded-md text-xs font-semibold">Registrar despacho</button>
+        </div>
+      </div>
+
+      <button onclick="confirmarAmbosB()" class="btn-primary w-full py-3.5 rounded-md text-sm font-semibold shadow-sm">Ambos confirmamos recepción → liberar garantía</button>
+    </div>
+
+    <!-- CASO C -->
+    <div id="panelC" class="caso-panel hidden card p-5 sm:p-6">
+      <h2 class="text-base font-semibold text-zinc-900 mb-1">Encuentro presencial</h2>
+      <p class="text-xs text-zinc-500 mb-5">Se coordina lugar y hora públicos, y ambas partes firman la planilla de conformidad en el momento.</p>
+
+      <div class="grid sm:grid-cols-2 gap-4 mb-5">
+        <div>
+          <span class="micro-label">Lugar público</span>
+          <input type="text" id="lugarC" placeholder="Ej: Plaza 25 de Mayo, San Juan" class="field">
+        </div>
+        <div>
+          <span class="micro-label">Fecha y hora</span>
+          <input type="datetime-local" id="fechaC" class="field">
+        </div>
+      </div>
+
+      <div class="border border-zinc-200 rounded-lg p-4 mb-4">
+        <p class="text-sm font-semibold text-zinc-900 mb-3">Planilla de conformidad — firmar en el lugar</p>
+        <span class="micro-label">Firma parte 1 (vendedor)</span>
+        <canvas id="firmaCanvas1" width="500" height="120" class="firma w-full mb-2"></canvas>
+        <button onclick="limpiarFirma(1)" class="text-xs text-brand-danger font-medium mb-4">Borrar firma</button>
+        <span class="micro-label">Firma parte 2 (comprador)</span>
+        <canvas id="firmaCanvas2" width="500" height="120" class="firma w-full mb-2"></canvas>
+        <button onclick="limpiarFirma(2)" class="text-xs text-brand-danger font-medium">Borrar firma</button>
+      </div>
+
+      <button onclick="cerrarTratoC()" class="btn-primary w-full py-3.5 rounded-md text-sm font-semibold shadow-sm">Ambas firmas listas → liberar garantía</button>
+    </div>
+
+    <!-- SELLO -->
+    <div class="flex flex-col items-center" id="sealWrap">
+      <div class="seal" id="seal">
+        <span class="text-white text-[10px] font-bold text-center leading-tight">TRATO<br>HECHO</span>
+      </div>
+      <p id="sealText" class="text-xs text-zinc-500 mt-2 hidden">Garantía liberada · registrado en el contrato</p>
+    </div>
+
+    <!-- MARCO LEGAL -->
+    <div class="card p-4 flex items-start gap-2.5">
+      <span class="w-2 h-2 rounded-full bg-brand-ok mt-1 flex-shrink-0"></span>
+      <p class="text-xs leading-relaxed text-zinc-600">
+        <span class="font-semibold text-zinc-800">Alcance del servicio:</span> Trato Hecho custodia una garantía y registra evidencia (etiquetas, códigos de seguimiento, firmas) para reducir el riesgo de estafa entre las partes. No sustituye una instancia judicial — ante un incumplimiento, la resolución queda entre comprador y vendedor ante la justicia correspondiente, y la evidencia registrada acá sirve de respaldo.
+      </p>
+    </div>
+
+  </main>
+
+  <script>
+    // ============ ESTADO Y CONEXIÓN WEB3 ============
+    let provider, signer, userAddress;
+
+    // ABI real de TratoHecho.sol
+    const abiEscrow = [
+      "function kycVerificado(address) view returns (bool)",
+      "function crearYGarantizarTrato(tuple(bytes32 tratoId, address comprador, address tokenGarantia, uint256 montoGarantia, uint256 diasPlazo, uint8 tipo, string activoOfrecido, string activoSolicitado) _p) external",
+      "function registrarDeclaracionJurada(bytes32 _tratoId, bytes32 _hashDeclaracion) external",
+      "function habilitarTransferencia(bytes32 _tratoId) external",
+      "function registrarEnvio(bytes32 _tratoId, string _trackingCode) external",
+      "function confirmarRecepcion(bytes32 _tratoId) external",
+      "function registrarFirmaPresencial(bytes32 _tratoId, bytes32 _hashPlanilla) external",
+      "function abrirDisputa(bytes32 _tratoId, string _motivo) external",
+      "function obtenerTratoBasico(bytes32) view returns (address vendedor, address comprador, address tokenGarantia, uint256 montoGarantia, uint256 plazoLimite, uint8 estado, uint8 tipo)",
+      "function obtenerTratoActivos(bytes32) view returns (string activoOfrecido, string activoSolicitado)",
+      "function obtenerTratoEnvios(bytes32) view returns (bool envioVendedorConfirmado, bool envioCompradorConfirmado, string trackingVendedor, string trackingComprador)",
+      "function obtenerTratoEvidencia(bytes32) view returns (bytes32 hashDeclaracionJurada, bytes32 hashPlanillaPresencial, bool existe)"
+    ];
+
+    // Caso A = 0, Caso B = 1, Caso C = 2 (debe coincidir con el enum TipoResolucion del contrato)
+    let casoActual = 0;
+
+    async function connectWallet() {
+      if (!window.ethereum) { alert("No se detectó MetaMask. Instalá la extensión para continuar."); return; }
+      try {
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        signer = provider.getSigner();
+        userAddress = await signer.getAddress();
+        document.getElementById("walletStatus").innerText = userAddress.substring(0,6) + "..." + userAddress.substring(38);
+        document.getElementById("walletStatus").classList.add("font-semibold");
+        document.getElementById("walletStatus").style.color = "var(--navy)";
+        document.getElementById("btnConnect").innerText = "Conectada";
+      } catch (e) {
+        console.error(e);
+        alert("Error al conectar la billetera.");
+      }
+    }
+
+    function getEscrowContract() {
+      const addr = document.getElementById("contractAddress").value;
+      if (!addr || !signer) { alert("Completá la dirección del contrato y conectá tu billetera."); return null; }
+      return new ethers.Contract(addr, abiEscrow, signer);
+    }
+
+    function getTratoId() {
+      return document.getElementById("tratoId").value;
+    }
+
+    async function crearTrato() {
+      const buyerAddr = document.getElementById("buyerAddress").value;
+      const tokenAddr = document.getElementById("tokenAddress").value;
+      const amount = document.getElementById("amount").value;
+      const days = document.getElementById("days").value;
+      const ofrecido = document.getElementById("activoOfrecido").value;
+      const solicitado = document.getElementById("activoSolicitado").value;
+      if (!buyerAddr || !tokenAddr || !amount) { alert("Completá comprador, token y monto."); return; }
+      const c = getEscrowContract();
+      if (!c) return;
+      try {
+        const propioVerificado = await c.kycVerificado(userAddress);
+        const contraparteVerificada = await c.kycVerificado(buyerAddr);
+        if (!propioVerificado) { alert("Tu wallet todavía no tiene KYC verificado."); return; }
+        if (!contraparteVerificada) { alert("La wallet de la contraparte todavía no tiene KYC verificado."); return; }
+
+        // El contrato cobra la garantía con transferFrom, así que primero hay
+        // que autorizarlo a mover ese monto del token (approve).
+        const erc20 = new ethers.Contract(tokenAddr, [
+          "function approve(address spender, uint256 amount) returns (bool)",
+          "function allowance(address owner, address spender) view returns (uint256)"
+        ], signer);
+        const montoBN = ethers.BigNumber.from(amount);
+        const permitido = await erc20.allowance(userAddress, c.address);
+        if (permitido.lt(montoBN)) {
+          alert("Paso 1 de 2: autorizá al contrato a custodiar tu garantía (confirmá en tu billetera).");
+          const txA = await erc20.approve(c.address, montoBN);
+          await txA.wait();
+        }
+        alert("Paso 2 de 2: bloquear la garantía y crear el trato (confirmá en tu billetera).");
+
+        const tx = await c.crearYGarantizarTrato({
+          tratoId: getTratoId(),
+          comprador: buyerAddr,
+          tokenGarantia: tokenAddr,
+          montoGarantia: amount,
+          diasPlazo: days,
+          tipo: casoActual,
+          activoOfrecido: ofrecido,
+          activoSolicitado: solicitado
+        });
+        alert("Transacción enviada. Esperando confirmación...");
+        await tx.wait();
+
+        await registrarDeclaracion(getTratoId());
+        alert("Trato creado, garantía bloqueada y declaración jurada registrada.");
+      } catch (e) { console.error(e); alert("Error al crear el trato. Revisá la consola."); }
+    }
+
+    // ============ SELECTOR DE CASOS ============
+    function setCaso(caso) {
+      ['A','B','C'].forEach(l => {
+        document.getElementById('tab'+l).classList.remove('active');
+        document.getElementById('panel'+l).classList.add('hidden');
+      });
+      document.getElementById('tab'+caso.toUpperCase()).classList.add('active');
+      document.getElementById('panel'+caso.toUpperCase()).classList.remove('hidden');
+      casoActual = { a:0, b:1, c:2 }[caso];
+    }
+    setCaso('a');
+
+    // ============ KYC (Didit) ============
+    // El link de sesión real se genera en el backend liviano (ver repo
+    // trato-hecho-backend) que llama a la API de Didit y devuelve la URL
+    // de verificación hospedada. Completá esta constante con tu URL de
+    // Vercel una vez desplegado el backend, ej:
+    // "https://trato-hecho-backend.vercel.app/api/crear-sesion-kyc"
+    const DIDIT_SESSION_ENDPOINT = "";
+
+    async function iniciarKycDidit() {
+      if (!userAddress) { alert("Conectá tu billetera primero."); return; }
+      if (!DIDIT_SESSION_ENDPOINT) {
+        alert("Falta conectar el backend que genera la sesión de Didit. Por ahora este botón es un placeholder.");
+        return;
+      }
+      const res = await fetch(DIDIT_SESSION_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ wallet: userAddress })
+      });
+      const data = await res.json();
+      window.location.href = data.url; // redirige a la sesión hospedada de Didit
+    }
+
+    async function chequearKyc() {
+      const c = getEscrowContract(); if (!c) return;
+      try {
+        const verificado = await c.kycVerificado(userAddress);
+        const el = document.getElementById('kycStatus');
+        el.innerText = verificado ? "verificado ✓" : "sin verificar";
+        el.className = "font-mono text-xs px-2 py-0.5 rounded " + (verificado ? "bg-emerald-600 text-white" : "bg-black/10");
+      } catch (e) { console.error(e); alert("No se pudo consultar el estado de KYC."); }
+    }
+
+    // ============ DECLARACIÓN JURADA ============
+    function setupFirma(canvasId) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext('2d');
+      ctx.strokeStyle = '#101B2D'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+      let drawing = false;
+      const pos = e => {
+        const r = canvas.getBoundingClientRect();
+        const p = e.touches ? e.touches[0] : e;
+        return { x: p.clientX - r.left, y: p.clientY - r.top };
+      };
+      const start = e => { drawing = true; const p = pos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); };
+      const move = e => { if(!drawing) return; const p = pos(e); ctx.lineTo(p.x,p.y); ctx.stroke(); e.preventDefault(); };
+      const end = () => drawing = false;
+      canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', move); canvas.addEventListener('mouseup', end);
+      canvas.addEventListener('touchstart', start); canvas.addEventListener('touchmove', move); canvas.addEventListener('touchend', end);
+    }
+    setupFirma('firmaJurada');
+    function limpiarFirmaJurada() {
+      const canvas = document.getElementById('firmaJurada');
+      canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
+    }
+    async function registrarDeclaracion(tratoId) {
+      const firmaData = document.getElementById('firmaJurada').toDataURL();
+      const hash = ethers.utils.id(firmaData + userAddress + tratoId);
+      const c = getEscrowContract(); if (!c) return;
+      const tx = await c.registrarDeclaracionJurada(tratoId, hash);
+      await tx.wait();
+    }
+
+    // ============ CASO A: transferencia + correo ============
+    let stepAState = 0;
+    function stepA(n) {
+      stepAState = n;
+      for (let i=1;i<=4;i++){
+        const dot = document.getElementById('dotA'+i);
+        dot.classList.remove('done','current');
+        if (i < n) dot.classList.add('done');
+        if (i === n) dot.classList.add('current');
+      }
+      document.getElementById('qrAreaA').classList.toggle('hidden', n < 2);
+      document.getElementById('trackingAreaA').classList.toggle('hidden', n < 3);
+      if (n === 2) generarQR('qrCodeA', 'TratoHecho-' + (getTratoId() || 'trato'));
+      if (n === 4) confirmarRecepcionOnChain();
+    }
+
+    async function confirmarRecepcionOnChain() {
+      const c = getEscrowContract(); if (!c) return;
+      try {
+        const tx = await c.confirmarRecepcion(getTratoId());
+        await tx.wait();
+        document.getElementById('seal').classList.add('stamped');
+        document.getElementById('sealText').classList.remove('hidden');
+      } catch (e) { console.error(e); alert("Error al confirmar recepción. Revisá la consola."); }
+    }
+
+    async function confirmarEnvioA() {
+      const code = document.getElementById('trackingCodeA').value;
+      if (!code) { alert("Ingresá el código de seguimiento."); return; }
+      const c = getEscrowContract(); if (!c) return;
+      try {
+        const tx = await c.registrarEnvio(getTratoId(), code);
+        await tx.wait();
+        alert("Despacho registrado.");
+      } catch (e) { console.error(e); alert("Error al registrar el envío."); }
+    }
+
+    // ============ CASO B: efectivo por correo, ambos sentidos ============
+    let enviosB = { comprador:false, vendedor:false };
+    function registrarEnvioB(quien) {
+      const code = document.getElementById(quien === 'comprador' ? 'trackingB1' : 'trackingB2').value;
+      if (!code) { alert("Ingresá el código de correo."); return; }
+      enviosB[quien] = true;
+      const idx = quien === 'comprador' ? 1 : 2;
+      document.getElementById('dotB'+idx).classList.add('done');
+      alert("Despacho de " + quien + " registrado.");
+    }
+    function confirmarAmbosB() {
+      if (!enviosB.comprador || !enviosB.vendedor) { alert("Faltan registrar despachos de ambas partes."); return; }
+      document.getElementById('dotB3').classList.add('done');
+      confirmarRecepcionOnChain();
+    }
+
+    // ============ QR ============
+    function generarQR(elementId, texto) {
+      const el = document.getElementById(elementId);
+      el.innerHTML = "";
+      new QRCode(el, { text: texto, width: 140, height: 140, colorDark:"#101B2D", colorLight:"#ffffff" });
+    }
+
+    // ============ CASO C: firma presencial (reutiliza setupFirma ya definida arriba) ============
+    setupFirma('firmaCanvas1'); setupFirma('firmaCanvas2');
+    function limpiarFirma(n) {
+      const canvas = document.getElementById('firmaCanvas'+n);
+      canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
+    }
+    async function cerrarTratoC() {
+      const lugar = document.getElementById('lugarC').value;
+      const fecha = document.getElementById('fechaC').value;
+      if (!lugar || !fecha) { alert("Completá lugar y fecha del encuentro."); return; }
+      const c1 = document.getElementById('firmaCanvas1').toDataURL();
+      const c2 = document.getElementById('firmaCanvas2').toDataURL();
+      const hashPlanilla = ethers.utils.id(c1 + c2 + lugar + fecha + getTratoId());
+      const c = getEscrowContract(); if (!c) return;
+      try {
+        const tx = await c.registrarFirmaPresencial(getTratoId(), hashPlanilla);
+        await tx.wait();
+        document.getElementById('seal').classList.add('stamped');
+        document.getElementById('sealText').classList.remove('hidden');
+      } catch (e) { console.error(e); alert("Error al registrar la planilla firmada."); }
+    }
+  </script>
 </body>
 </html>
+
