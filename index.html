@@ -217,7 +217,7 @@
     <!-- CASO B -->
     <div id="panelB" class="caso-panel hidden card p-5 sm:p-6">
       <h2 class="text-base font-semibold text-zinc-900 mb-1">Efectivo por correo, en ambos sentidos</h2>
-      <p class="text-xs text-zinc-500 mb-5">Ninguna transferencia bancaria: cada parte envía billetes por correo a la otra.</p>
+      <p class="text-xs text-zinc-500 mb-5">Ninguna transferencia bancaria: cada parte envía billetes por correo a la otra. Cada una registra su despacho desde su billetera, y el comprador confirma la recepción.</p>
 
       <div class="flex items-center gap-2 mb-5">
         <div class="step-dot current" id="dotB1"></div><div class="step-dot" id="dotB2"></div>
@@ -241,13 +241,13 @@
         </div>
       </div>
 
-      <button onclick="confirmarAmbosB()" class="btn-primary w-full py-3.5 rounded-md text-sm font-semibold shadow-sm">Ambos confirmamos recepción → liberar garantía</button>
+      <button onclick="confirmarAmbosB()" class="btn-primary w-full py-3.5 rounded-md text-sm font-semibold shadow-sm">Comprador confirma recepción → liberar garantía</button>
     </div>
 
     <!-- CASO C -->
     <div id="panelC" class="caso-panel hidden card p-5 sm:p-6">
       <h2 class="text-base font-semibold text-zinc-900 mb-1">Encuentro presencial</h2>
-      <p class="text-xs text-zinc-500 mb-5">Se coordina lugar y hora públicos, y ambas partes firman la planilla de conformidad en el momento.</p>
+      <p class="text-xs text-zinc-500 mb-5">Se coordina lugar y hora públicos. Cada parte firma desde su propia billetera, con el mismo lugar y fecha, y la garantía se libera cuando firman las dos.</p>
 
       <div class="grid sm:grid-cols-2 gap-4 mb-5">
         <div>
@@ -261,7 +261,7 @@
       </div>
 
       <div class="border border-zinc-200 rounded-lg p-4 mb-4">
-        <p class="text-sm font-semibold text-zinc-900 mb-3">Planilla de conformidad — firmar en el lugar</p>
+        <p class="text-sm font-semibold text-zinc-900 mb-3">Planilla de conformidad (dibujo opcional de la firma en pantalla)</p>
         <span class="micro-label">Firma parte 1 (vendedor)</span>
         <canvas id="firmaCanvas1" width="500" height="120" class="firma w-full mb-2"></canvas>
         <button onclick="limpiarFirma(1)" class="text-xs text-brand-danger font-medium mb-4">Borrar firma</button>
@@ -270,7 +270,7 @@
         <button onclick="limpiarFirma(2)" class="text-xs text-brand-danger font-medium">Borrar firma</button>
       </div>
 
-      <button onclick="cerrarTratoC()" class="btn-primary w-full py-3.5 rounded-md text-sm font-semibold shadow-sm">Ambas firmas listas → liberar garantía</button>
+      <button onclick="cerrarTratoC()" class="btn-primary w-full py-3.5 rounded-md text-sm font-semibold shadow-sm">Firmar la planilla desde mi billetera</button>
     </div>
 
     <!-- SELLO -->
@@ -308,7 +308,7 @@
       "function obtenerTratoBasico(bytes32) view returns (address vendedor, address comprador, address tokenGarantia, uint256 montoGarantia, uint256 plazoLimite, uint8 estado, uint8 tipo)",
       "function obtenerTratoActivos(bytes32) view returns (string activoOfrecido, string activoSolicitado)",
       "function obtenerTratoEnvios(bytes32) view returns (bool envioVendedorConfirmado, bool envioCompradorConfirmado, string trackingVendedor, string trackingComprador)",
-      "function obtenerTratoEvidencia(bytes32) view returns (bytes32 hashDeclaracionJurada, bytes32 hashPlanillaPresencial, bool existe)"
+      "function obtenerTratoEvidencia(bytes32) view returns (bytes32 hashDeclaracionJurada, bytes32 hashPlanillaPresencial, bool firmaVendedor, bool firmaComprador, bool existe)"
     ];
 
     // Caso A = 0, Caso B = 1, Caso C = 2 (debe coincidir con el enum TipoResolucion del contrato)
@@ -488,7 +488,13 @@
         await tx.wait();
         document.getElementById('seal').classList.add('stamped');
         document.getElementById('sealText').classList.remove('hidden');
-      } catch (e) { console.error(e); alert("Error al confirmar recepción. Revisá la consola."); }
+        return true;
+      } catch (e) { console.error(e); alert("No se pudo confirmar la recepción: " + motivoError(e)); return false; }
+    }
+
+    // Extrae el motivo legible de un error de la billetera o del contrato
+    function motivoError(e) {
+      return (e && (e.reason || (e.error && e.error.message) || (e.data && e.data.message) || e.message)) || "motivo desconocido";
     }
 
     async function confirmarEnvioA() {
@@ -503,19 +509,24 @@
     }
 
     // ============ CASO B: efectivo por correo, ambos sentidos ============
-    let enviosB = { comprador:false, vendedor:false };
-    function registrarEnvioB(quien) {
+    async function registrarEnvioB(quien) {
       const code = document.getElementById(quien === 'comprador' ? 'trackingB1' : 'trackingB2').value;
       if (!code) { alert("Ingresá el código de correo."); return; }
-      enviosB[quien] = true;
-      const idx = quien === 'comprador' ? 1 : 2;
-      document.getElementById('dotB'+idx).classList.add('done');
-      alert("Despacho de " + quien + " registrado.");
+      const c = getEscrowContract(); if (!c) return;
+      try {
+        const tx = await c.registrarEnvio(getTratoId(), code);
+        await tx.wait();
+        const idx = quien === 'comprador' ? 1 : 2;
+        document.getElementById('dotB'+idx).classList.add('done');
+        alert("Despacho de " + quien + " registrado en el contrato.");
+      } catch (e) {
+        console.error(e);
+        alert("No se pudo registrar el despacho: " + motivoError(e) + "\n\nCada parte registra el suyo desde su propia billetera.");
+      }
     }
-    function confirmarAmbosB() {
-      if (!enviosB.comprador || !enviosB.vendedor) { alert("Faltan registrar despachos de ambas partes."); return; }
-      document.getElementById('dotB3').classList.add('done');
-      confirmarRecepcionOnChain();
+    async function confirmarAmbosB() {
+      const ok = await confirmarRecepcionOnChain();
+      if (ok) document.getElementById('dotB3').classList.add('done');
     }
 
     // ============ QR ============
@@ -532,21 +543,29 @@
       canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
     }
     async function cerrarTratoC() {
-      const lugar = document.getElementById('lugarC').value;
+      const lugar = document.getElementById('lugarC').value.trim();
       const fecha = document.getElementById('fechaC').value;
       if (!lugar || !fecha) { alert("Completá lugar y fecha del encuentro."); return; }
-      const c1 = document.getElementById('firmaCanvas1').toDataURL();
-      const c2 = document.getElementById('firmaCanvas2').toDataURL();
-      const hashPlanilla = ethers.utils.id(c1 + c2 + lugar + fecha + getTratoId());
+      // El hash sale de los términos acordados: así ambas partes, desde su propia
+      // billetera, generan exactamente el mismo valor. La transacción firmada por
+      // cada billetera es la firma de cada parte.
+      const hashPlanilla = ethers.utils.id(getTratoId() + "|" + lugar + "|" + fecha);
       const c = getEscrowContract(); if (!c) return;
       try {
         const tx = await c.registrarFirmaPresencial(getTratoId(), hashPlanilla);
         await tx.wait();
-        document.getElementById('seal').classList.add('stamped');
-        document.getElementById('sealText').classList.remove('hidden');
-      } catch (e) { console.error(e); alert("Error al registrar la planilla firmada."); }
+        const b = await c.obtenerTratoBasico(getTratoId());
+        if (Number(b.estado) === 4) {
+          document.getElementById('seal').classList.add('stamped');
+          document.getElementById('sealText').classList.remove('hidden');
+        } else {
+          alert("Tu firma quedó registrada. Falta la firma de la otra parte, desde su billetera y con el mismo lugar y fecha. La garantía se libera cuando firmen las dos.");
+        }
+      } catch (e) {
+        console.error(e);
+        alert("No se pudo registrar la firma: " + motivoError(e));
+      }
     }
   </script>
 </body>
 </html>
-
