@@ -45,6 +45,8 @@ contract TratoHecho is Ownable {
         string trackingVendedor;
         string trackingComprador;
         bytes32 hashPlanillaPresencial;
+        bool firmaVendedor;
+        bool firmaComprador;
         bool existe;
     }
 
@@ -77,6 +79,16 @@ contract TratoHecho is Ownable {
 
     modifier tratoExiste(bytes32 _tratoId) {
         require(tratos[_tratoId].existe, "El trato no existe");
+        _;
+    }
+
+    /// @dev Solo se puede operar un trato que sigue en curso (no liberado, cancelado ni en disputa).
+    modifier soloActivo(bytes32 _tratoId) {
+        Estado e = tratos[_tratoId].estado;
+        require(
+            e == Estado.Creado || e == Estado.TransferenciaHabilitada || e == Estado.EnProceso,
+            "El trato ya no esta activo"
+        );
         _;
     }
 
@@ -158,13 +170,18 @@ contract TratoHecho is Ownable {
 
     // ============ CASOS A y B: registro de envios ============
 
-    /// @dev En el caso A solo despacha el vendedor; en el caso B despachan ambos.
+    /// @dev Caso A: despacha solo el vendedor. Caso B: despacha cada parte el suyo.
     function registrarEnvio(bytes32 _tratoId, string calldata _trackingCode)
         external
         tratoExiste(_tratoId)
         soloParticipante(_tratoId)
+        soloActivo(_tratoId)
     {
         Trato storage t = tratos[_tratoId];
+        require(t.tipo != TipoResolucion.Presencial, "Este trato es presencial");
+        if (t.tipo == TipoResolucion.TransferenciaYEnvio) {
+            require(msg.sender == t.vendedor, "En el Caso A despacha solo el vendedor");
+        }
         t.estado = Estado.EnProceso;
         if (msg.sender == t.vendedor) {
             t.trackingVendedor = _trackingCode;
@@ -176,42 +193,60 @@ contract TratoHecho is Ownable {
         emit EnvioRegistrado(_tratoId, msg.sender, _trackingCode);
     }
 
+    /// @dev En A y B confirma SIEMPRE el comprador: es quien debe recibir lo pactado.
     function confirmarRecepcion(bytes32 _tratoId)
         external
         tratoExiste(_tratoId)
         soloParticipante(_tratoId)
+        soloActivo(_tratoId)
     {
         Trato storage t = tratos[_tratoId];
-
-        if (t.tipo == TipoResolucion.TransferenciaYEnvio) {
-            require(msg.sender == t.comprador, "Solo el comprador confirma recepcion en Caso A");
-            require(t.envioVendedorConfirmado, "El vendedor aun no despacho el envio");
-            t.estado = Estado.Entregado;
-            emit RecepcionConfirmada(_tratoId, msg.sender);
-            _liberar(_tratoId, t.vendedor);
-        } else if (t.tipo == TipoResolucion.EfectivoPorCorreo) {
-            require(t.envioVendedorConfirmado && t.envioCompradorConfirmado, "Faltan despachos de ambas partes");
-            t.estado = Estado.Entregado;
-            emit RecepcionConfirmada(_tratoId, msg.sender);
-            _liberar(_tratoId, t.vendedor);
-        } else {
-            revert("Este trato usa el flujo presencial");
+        require(t.tipo != TipoResolucion.Presencial, "Este trato usa el flujo presencial");
+        require(msg.sender == t.comprador, "Solo el comprador confirma la recepcion");
+        require(t.envioVendedorConfirmado, "El vendedor aun no despacho el envio");
+        if (t.tipo == TipoResolucion.EfectivoPorCorreo) {
+            require(t.envioCompradorConfirmado, "El comprador aun no registro su despacho");
         }
+        t.estado = Estado.Entregado;
+        emit RecepcionConfirmada(_tratoId, msg.sender);
+        _liberar(_tratoId, t.vendedor);
     }
 
     // ============ CASO C: encuentro presencial ============
 
+    /// @dev Firman las DOS partes, cada una desde su billetera, sobre el mismo hash de planilla.
+    ///      La garantia se libera recien cuando ambas firmaron.
     function registrarFirmaPresencial(bytes32 _tratoId, bytes32 _hashPlanilla)
         external
         tratoExiste(_tratoId)
         soloParticipante(_tratoId)
+        soloActivo(_tratoId)
     {
         Trato storage t = tratos[_tratoId];
         require(t.tipo == TipoResolucion.Presencial, "Este trato no es presencial");
-        t.hashPlanillaPresencial = _hashPlanilla;
-        t.estado = Estado.Entregado;
+        require(_hashPlanilla != bytes32(0), "Hash de planilla invalido");
+
+        if (t.hashPlanillaPresencial == bytes32(0)) {
+            t.hashPlanillaPresencial = _hashPlanilla;
+        } else {
+            require(t.hashPlanillaPresencial == _hashPlanilla, "La planilla no coincide con la de la otra parte");
+        }
+
+        if (msg.sender == t.vendedor) {
+            require(!t.firmaVendedor, "El vendedor ya firmo");
+            t.firmaVendedor = true;
+        } else {
+            require(!t.firmaComprador, "El comprador ya firmo");
+            t.firmaComprador = true;
+        }
         emit FirmaPresencialRegistrada(_tratoId, _hashPlanilla);
-        _liberar(_tratoId, t.vendedor);
+
+        if (t.firmaVendedor && t.firmaComprador) {
+            t.estado = Estado.Entregado;
+            _liberar(_tratoId, t.vendedor);
+        } else {
+            t.estado = Estado.EnProceso;
+        }
     }
 
     // ============ LIBERACION Y DISPUTAS ============
@@ -296,9 +331,11 @@ contract TratoHecho is Ownable {
     function obtenerTratoEvidencia(bytes32 _tratoId) external view returns (
         bytes32 hashDeclaracionJurada,
         bytes32 hashPlanillaPresencial,
+        bool firmaVendedor,
+        bool firmaComprador,
         bool existe
     ) {
         Trato storage t = tratos[_tratoId];
-        return (t.hashDeclaracionJurada, t.hashPlanillaPresencial, t.existe);
+        return (t.hashDeclaracionJurada, t.hashPlanillaPresencial, t.firmaVendedor, t.firmaComprador, t.existe);
     }
 }
