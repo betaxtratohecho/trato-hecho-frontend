@@ -166,8 +166,21 @@
         </div>
 
         <div>
-          <span class="micro-label">Contraparte (billetera o alias)</span>
-          <input type="text" id="buyerAddress" placeholder="Ej: 0xAbC...123" class="field">
+          <span class="micro-label">Wallet de la contraparte (0x...)</span>
+          <input type="text" id="buyerAddress" placeholder="Ej: 0xAbC...123" class="field font-mono">
+          <span class="text-[11px] text-zinc-400 mt-1 block">Dirección EVM requerida por el contrato para la otra parte.</span>
+        </div>
+
+        <div>
+          <span class="micro-label">Red económica para USDT / USDC</span>
+          <select id="redEconomica" class="field font-medium">
+            <option value="Arbitrum One" selected>Arbitrum (baja comisión · USDT/USDC)</option>
+            <option value="Base">Base (baja comisión · USDC)</option>
+            <option value="Optimism">Optimism (baja comisión · USDT/USDC)</option>
+            <option value="Polygon">Polygon (baja comisión · USDT/USDC)</option>
+            <option value="BNB Smart Chain">BNB Smart Chain (baja comisión · USDT/USDC)</option>
+            <option value="Tron (TRC-20)">Tron / TRC-20 (referencia USDT)</option>
+          </select>
         </div>
 
         <div>
@@ -200,6 +213,23 @@
           <input type="number" id="days" min="0" step="1" oninput="actualizarBotonCrear()" placeholder="Ej: 0 (en el acto) o días" class="field font-mono">
         </div>
 
+        <div class="sm:col-span-2 border border-zinc-200 rounded-lg p-3.5 bg-zinc-50 space-y-3">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-xs font-semibold text-zinc-800">Datos de pago / cobro local (opcional · Argentina)</span>
+            <span class="text-[11px] text-zinc-500">Alias · CBU · CVU · Banco o billetera</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <span class="micro-label">Alias / CBU / CVU</span>
+              <input type="text" id="datoLocalCuenta" placeholder="Ej: mi.alias.mp o 22 dígitos CBU/CVU" class="field">
+            </div>
+            <div>
+              <span class="micro-label">Banco o billetera</span>
+              <input type="text" id="datoLocalEntidad" placeholder="Ej: Mercado Pago, Brubank, Lemon, Galicia" class="field">
+            </div>
+          </div>
+        </div>
+
         <div>
           <span class="micro-label">Lo que ofrezco</span>
           <div class="flex flex-wrap gap-1.5 mb-2">
@@ -209,11 +239,731 @@
             <button type="button" onclick="aplicarSimbolo('activoOfrecido', '💵 USD')" class="sym-chip">💵 USD</button>
             <button type="button" onclick="aplicarSimbolo('activoOfrecido', '🪙 USDC')" class="sym-chip">🪙 USDC</button>
           </div>
-          <input type="text" id="activoOfrecido" placeholder="Ej: $ CLP 500.000 o 🪙 USDC 100" class="field">
+          <input type="text" id="activoOfrecido" placeholder="Ej: $ USD 100 o $ CLP 500.000" class="field">
         </div>
 
-        <div class="sm:col-span-2">
+        <div>
           <span class="micro-label">Lo que pido a cambio</span>
           <div class="flex flex-wrap gap-1.5 mb-2">
             <button type="button" onclick="aplicarSimbolo('activoSolicitado', '$ USD')" class="sym-chip">$ USD</button>
-            <button type="button" onclick="aplicarSimbolo('activoSolicitado', '$ ARS')" class="sym
+            <button type="button" onclick="aplicarSimbolo('activoSolicitado', '$ ARS')" class="sym-chip">$ ARS</button>
+            <button type="button" onclick="aplicarSimbolo('activoSolicitado', '$ CLP')" class="sym-chip">$ CLP</button>
+            <button type="button" onclick="aplicarSimbolo('activoSolicitado', '💵 USD')" class="sym-chip">💵 USD</button>
+            <button type="button" onclick="aplicarSimbolo('activoSolicitado', '🪙 USDC')" class="sym-chip">🪙 USDC</button>
+          </div>
+          <input type="text" id="activoSolicitado" placeholder="Ej: 🪙 USDC 100 o $ ARS 620.000" class="field">
+        </div>
+      </div>
+
+      <!-- Ajuste técnico plegable para no mostrar códigos largos de entrada -->
+      <details class="mt-4 border border-zinc-200 rounded-lg p-3 bg-zinc-50 text-xs">
+        <summary class="cursor-pointer font-medium text-zinc-700 select-none">Ajustes avanzados del contrato (opcional)</summary>
+        <div class="mt-3">
+          <span class="micro-label">Contrato Escrow</span>
+          <input type="text" id="contractAddress" oninput="actualizarResumenContrato()" class="field font-mono text-xs">
+        </div>
+      </details>
+
+      <button id="btnCrearTrato" onclick="crearTrato()" class="btn-primary w-full mt-5 py-3.5 rounded-md text-sm font-semibold shadow-sm">
+        Verificar, bloquear garantía ($) y firmar trato
+      </button>
+    </div>
+
+    <!-- SELECTOR DE CASOS -->
+    <div>
+      <span class="micro-label mb-2">Cómo se entrega lo pactado</span>
+      <div class="grid grid-cols-3 gap-2">
+        <button onclick="setCaso('a')" id="tabA" class="case-pill active py-3 px-2 text-[11px] font-semibold uppercase rounded-md border-2 text-center">Transferencia<br>+ envío</button>
+        <button onclick="setCaso('b')" id="tabB" class="case-pill py-3 px-2 text-[11px] font-semibold uppercase rounded-md border-2 text-center">Efectivo<br>por correo</button>
+        <button onclick="setCaso('c')" id="tabC" class="case-pill py-3 px-2 text-[11px] font-semibold uppercase rounded-md border-2 text-center">Encuentro<br>presencial</button>
+      </div>
+    </div>
+
+    <!-- CASO A -->
+    <div id="panelA" class="caso-panel card p-5 sm:p-6">
+      <h2 class="text-base font-semibold text-zinc-900 mb-1">Transferencia y envío postal</h2>
+      <p class="text-xs text-zinc-500 mb-5">El vendedor habilita la transferencia, la recibe, envía el paquete y el comprador confirma recepción.</p>
+
+      <div class="flex items-center gap-2 mb-5">
+        <div class="step-dot current" id="dotA1"></div><div class="step-dot" id="dotA2"></div>
+        <div class="step-dot" id="dotA3"></div><div class="step-dot" id="dotA4"></div>
+      </div>
+
+      <div class="space-y-2.5">
+        <button onclick="stepA(1)" class="w-full text-left border border-zinc-200 rounded-lg p-4 hover:bg-zinc-50 transition-all">
+          <span class="text-sm font-semibold text-zinc-900">① Habilitar transferencia</span>
+          <p class="text-xs text-zinc-500 mt-1">El vendedor confirma en el contrato que autoriza la transferencia del comprador.</p>
+        </button>
+        <button onclick="stepA(2)" class="w-full text-left border border-zinc-200 rounded-lg p-4 hover:bg-zinc-50 transition-all">
+          <span class="text-sm font-semibold text-zinc-900">② Transferencia recibida → generar etiqueta</span>
+          <p class="text-xs text-zinc-500 mt-1">Al confirmar el cobro, se genera la etiqueta con QR para pegar en el sobre/paquete.</p>
+        </button>
+        <button onclick="stepA(3)" class="w-full text-left border border-zinc-200 rounded-lg p-4 hover:bg-zinc-50 transition-all">
+          <span class="text-sm font-semibold text-zinc-900">③ Marcar envío despachado</span>
+          <p class="text-xs text-zinc-500 mt-1">Se registra el código de seguimiento del correo.</p>
+        </button>
+        <button onclick="stepA(4)" class="w-full text-left border border-zinc-200 rounded-lg p-4 hover:bg-zinc-50 transition-all">
+          <span class="text-sm font-semibold text-zinc-900">④ Confirmar recepción → liberar garantía</span>
+          <p class="text-xs text-zinc-500 mt-1">El comprador confirma que recibió lo pactado. Se libera el aval ($).</p>
+        </button>
+      </div>
+
+      <div id="qrAreaA" class="hidden mt-5 p-5 rounded-lg bg-zinc-50 border border-zinc-200 text-center">
+        <p class="text-xs font-semibold text-zinc-700 mb-3">Etiqueta de envío — pegar en el paquete</p>
+        <div id="qrCodeA" class="flex justify-center"></div>
+        <p class="font-mono text-[10px] mt-3 text-zinc-500">Este QR valida despacho y entrega dentro de Trato Hecho</p>
+      </div>
+
+      <div id="trackingAreaA" class="hidden mt-4">
+        <span class="micro-label">Código de seguimiento del correo</span>
+        <input type="text" id="trackingCodeA" placeholder="Ej: CA123456789AR" class="field font-mono">
+        <button onclick="confirmarEnvioA()" class="btn-primary mt-3 px-4 py-2.5 rounded-md text-xs font-semibold">Registrar despacho</button>
+      </div>
+    </div>
+
+    <!-- CASO B -->
+    <div id="panelB" class="caso-panel hidden card p-5 sm:p-6">
+      <h2 class="text-base font-semibold text-zinc-900 mb-1">Efectivo por correo, en ambos sentidos</h2>
+      <p class="text-xs text-zinc-500 mb-5">Cada parte envía efectivo por correo a la otra, registra su despacho desde su billetera y el comprador confirma la recepción.</p>
+
+      <div class="flex items-center gap-2 mb-5">
+        <div class="step-dot current" id="dotB1"></div><div class="step-dot" id="dotB2"></div>
+        <div class="step-dot" id="dotB3"></div>
+      </div>
+
+      <div class="grid sm:grid-cols-2 gap-3 mb-4">
+        <div class="border border-zinc-200 rounded-lg p-4">
+          <p class="text-sm font-semibold text-zinc-900 mb-2">Comprador → envía efectivo ($)</p>
+          <button onclick="generarQR('qrCodeB1','Envio-Comprador')" class="btn-ghost w-full py-2 rounded-md text-xs font-semibold mb-2">Generar etiqueta de envío</button>
+          <div id="qrCodeB1" class="flex justify-center my-2"></div>
+          <input type="text" id="trackingB1" placeholder="Código de correo" class="field font-mono text-xs mb-2">
+          <button onclick="registrarEnvioB('comprador')" class="btn-primary w-full py-2 rounded-md text-xs font-semibold">Registrar despacho</button>
+        </div>
+        <div class="border border-zinc-200 rounded-lg p-4">
+          <p class="text-sm font-semibold text-zinc-900 mb-2">Vendedor → envía efectivo ($)</p>
+          <button onclick="generarQR('qrCodeB2','Envio-Vendedor')" class="btn-ghost w-full py-2 rounded-md text-xs font-semibold mb-2">Generar etiqueta de envío</button>
+          <div id="qrCodeB2" class="flex justify-center my-2"></div>
+          <input type="text" id="trackingB2" placeholder="Código de correo" class="field font-mono text-xs mb-2">
+          <button onclick="registrarEnvioB('vendedor')" class="btn-primary w-full py-2 rounded-md text-xs font-semibold">Registrar despacho</button>
+        </div>
+      </div>
+
+      <button onclick="confirmarAmbosB()" class="btn-primary w-full py-3.5 rounded-md text-sm font-semibold shadow-sm">Comprador confirma recepción → liberar garantía ($)</button>
+    </div>
+
+    <!-- CASO C -->
+    <div id="panelC" class="caso-panel hidden card p-5 sm:p-6">
+      <h2 class="text-base font-semibold text-zinc-900 mb-1">Encuentro presencial</h2>
+      <p class="text-xs text-zinc-500 mb-5">Se coordina lugar y hora públicos. Cada parte firma desde su propia billetera con el mismo lugar y fecha.</p>
+
+      <div class="grid sm:grid-cols-2 gap-4 mb-5">
+        <div>
+          <span class="micro-label">Lugar público</span>
+          <input type="text" id="lugarC" placeholder="Ej: Plaza 25 de Mayo" class="field">
+        </div>
+        <div>
+          <span class="micro-label">Fecha y hora</span>
+          <input type="datetime-local" id="fechaC" class="field">
+        </div>
+      </div>
+
+      <div class="border border-zinc-200 rounded-lg p-4 mb-4">
+        <p class="text-sm font-semibold text-zinc-900 mb-3">Planilla de conformidad (dibujo opcional en pantalla)</p>
+        <span class="micro-label">Firma parte 1 (vendedor)</span>
+        <canvas id="firmaCanvas1" width="500" height="120" class="firma w-full mb-2"></canvas>
+        <button onclick="limpiarFirma(1)" class="text-xs text-brand-danger font-medium mb-4">Borrar firma</button>
+        <span class="micro-label">Firma parte 2 (comprador)</span>
+        <canvas id="firmaCanvas2" width="500" height="120" class="firma w-full mb-2"></canvas>
+        <button onclick="limpiarFirma(2)" class="text-xs text-brand-danger font-medium">Borrar firma</button>
+      </div>
+
+      <button onclick="cerrarTratoC()" class="btn-primary w-full py-3.5 rounded-md text-sm font-semibold shadow-sm">Firmar la planilla desde mi billetera</button>
+    </div>
+
+    <!-- PROBLEMAS CON EL TRATO -->
+    <div class="card p-5 sm:p-6">
+      <h2 class="text-base font-semibold text-zinc-900 mb-1">Estado y problemas del trato</h2>
+      <p class="text-xs text-zinc-500 mb-4">Consultá cómo está el trato, abrí una disputa si algo salió mal o reclamá si venció el plazo.</p>
+      <button onclick="verEstadoTrato()" class="btn-ghost w-full py-3 rounded-md text-xs font-semibold mb-2">Ver estado del trato</button>
+      <p id="estadoTrato" class="text-xs text-zinc-700 font-mono mb-4"></p>
+      <span class="micro-label">Motivo de la disputa</span>
+      <input type="text" id="motivoDisputa" placeholder="Ej: no recibí lo pactado" class="field mb-3">
+      <div class="flex flex-col sm:flex-row gap-2">
+        <button onclick="abrirDisputaOnChain()" class="btn-primary flex-1 py-3 rounded-md text-xs font-semibold">Abrir disputa</button>
+        <button onclick="reclamarPorVencimientoOnChain()" class="btn-ghost flex-1 py-3 rounded-md text-xs font-semibold">Reclamar por vencimiento ($)</button>
+      </div>
+    </div>
+
+    <!-- SELLO -->
+    <div class="flex flex-col items-center" id="sealWrap">
+      <div class="seal" id="seal">
+        <span class="text-white text-[10px] font-bold text-center leading-tight">TRATO<br>HECHO</span>
+      </div>
+      <p id="sealText" class="text-xs text-zinc-500 mt-2 hidden">Garantía liberada ($) · registrado en el contrato</p>
+    </div>
+
+    <!-- MARCO LEGAL -->
+    <div class="card p-4 flex items-start gap-2.5">
+      <span class="w-2 h-2 rounded-full bg-brand-ok mt-1 flex-shrink-0"></span>
+      <p class="text-xs leading-relaxed text-zinc-600">
+        <span class="font-semibold text-zinc-800">Alcance del servicio:</span> Trato Hecho custodia una garantía de respaldo ($) y registra evidencia (etiquetas, códigos de seguimiento, firmas) para reducir el riesgo entre las partes. No es una entidad bancaria ni reemplaza una instancia judicial; la referencia en $ indica el respaldo de la garantía en el contrato.
+      </p>
+    </div>
+
+  </main>
+
+  <script>
+    let provider, signer, userAddress;
+
+    const abiEscrow = [
+      "function kycVerificado(address) view returns (bool)",
+      "function crearYGarantizarTrato(tuple(bytes32 tratoId, address comprador, address tokenGarantia, uint256 montoGarantia, uint256 diasPlazo, uint8 tipo, string activoOfrecido, string activoSolicitado) _p) external",
+      "function registrarDeclaracionJurada(bytes32 _tratoId, bytes32 _hashDeclaracion) external",
+      "function habilitarTransferencia(bytes32 _tratoId) external",
+      "function registrarEnvio(bytes32 _tratoId, string _trackingCode) external",
+      "function confirmarRecepcion(bytes32 _tratoId) external",
+      "function registrarFirmaPresencial(bytes32 _tratoId, bytes32 _hashPlanilla) external",
+      "function abrirDisputa(bytes32 _tratoId, string _motivo) external",
+      "function reclamarPorVencimiento(bytes32 _tratoId) external",
+      "function obtenerTratoBasico(bytes32) view returns (address vendedor, address comprador, address tokenGarantia, uint256 montoGarantia, uint256 plazoLimite, uint8 estado, uint8 tipo)",
+      "function obtenerTratoActivos(bytes32) view returns (string activoOfrecido, string activoSolicitado)",
+      "function obtenerTratoEnvios(bytes32) view returns (bool envioVendedorConfirmado, bool envioCompradorConfirmado, string trackingVendedor, string trackingComprador)",
+      "function obtenerTratoEvidencia(bytes32) view returns (bytes32 hashDeclaracionJurada, bytes32 hashPlanillaPresencial, bool firmaVendedor, bool firmaComprador, bool existe)"
+    ];
+
+    const CONTRATO_POR_DEFECTO = "0x249dC2f1DD175B4B6895F5ff9ed655a4E0e0464B";
+
+    let kycOk = false;
+    function aplicarBloqueoKyc() {
+      const card = document.getElementById('cardDeclaracion');
+      const aviso = document.getElementById('avisoKyc');
+      card.style.opacity = kycOk ? '1' : '0.45';
+      card.style.pointerEvents = kycOk ? 'auto' : 'none';
+      if (!kycOk) {
+        document.getElementById('declAcepto').checked = false;
+      }
+      actualizarBotonCrear();
+      aviso.style.display = kycOk ? 'none' : 'block';
+    }
+
+    let casoActual = 0;
+
+    function aplicarSimbolo(inputId, simbolo) {
+      const el = document.getElementById(inputId);
+      if (!el) return;
+      const actual = el.value.trim();
+      if (!actual) {
+        el.value = simbolo + " ";
+      } else if (!actual.includes(simbolo)) {
+        el.value = simbolo + " " + actual;
+      }
+      el.focus();
+    }
+
+    function actualizarResumenContrato() {
+      const addr = document.getElementById('contractAddress').value.trim();
+      const el = document.getElementById('resumenContrato');
+      if (!addr) { el.textContent = "sin contrato"; return; }
+      el.textContent = addr.length > 10 ? addr.slice(0, 6) + "..." + addr.slice(-4) : addr;
+    }
+
+    function sincronizarTokenPreset() {
+      const sel = document.getElementById('tokenPreset');
+      const customWrap = document.getElementById('tokenCustomWrap');
+      const tokenInput = document.getElementById('tokenAddress');
+      const decInput = document.getElementById('tokenDecimals');
+      const opt = sel.options[sel.selectedIndex];
+      decInput.value = opt.getAttribute('data-decimals') || '6';
+      if (sel.value === 'custom') {
+        customWrap.classList.remove('hidden');
+      } else {
+        customWrap.classList.add('hidden');
+        tokenInput.value = sel.value;
+      }
+    }
+
+    function normalizarTratoId(raw) {
+      const val = (raw || "").trim();
+      if (!val) return "";
+      if (/^0x[0-9a-fA-F]{64}$/.test(val)) return val;
+      return ethers.utils.id(val);
+    }
+
+    function getTratoId() {
+      return normalizarTratoId(document.getElementById("tratoId").value);
+    }
+
+    function esPlazoValido() {
+      const raw = document.getElementById("days").value.trim();
+      if (raw === "") return false;
+      const num = Number(raw);
+      return Number.isInteger(num) && num >= 0;
+    }
+
+    async function connectWallet() {
+      if (!window.ethereum) { alert("No se detectó billetera Web3. Instalá MetaMask para continuar."); return; }
+      try {
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        signer = provider.getSigner();
+        userAddress = await signer.getAddress();
+        document.getElementById("walletStatus").innerText = userAddress.substring(0,6) + "..." + userAddress.substring(38);
+        document.getElementById("walletStatus").classList.add("font-semibold");
+        document.getElementById("btnConnect").innerText = "Conectada";
+        renderDeclaracion();
+        chequearKyc(true);
+      } catch (e) {
+        console.error(e);
+        alert("Error al conectar la billetera.");
+      }
+    }
+
+    function getEscrowContract() {
+      const addr = document.getElementById("contractAddress").value.trim();
+      if (!addr || !signer) { alert("Conectá tu billetera y verificá el contrato."); return null; }
+      return new ethers.Contract(addr, abiEscrow, signer);
+    }
+
+    async function crearTrato() {
+      if (!kycOk) { alert("Verificación obligatoria: completá y comprobá tu identidad (DNI + selfie) antes de firmar."); return; }
+      if (!document.getElementById('declAcepto').checked) { alert("Tildá el casillero para aceptar la declaración jurada."); return; }
+      const tratoIdBytes32 = getTratoId();
+      const buyerAddr = document.getElementById("buyerAddress").value.trim();
+      const tokenAddr = document.getElementById("tokenAddress").value.trim();
+      const amountRaw = document.getElementById("amount").value.trim().replace(",", ".");
+      const daysRaw = document.getElementById("days").value.trim();
+      const redEconomica = document.getElementById("redEconomica").value;
+      const datoLocalCuenta = document.getElementById("datoLocalCuenta").value.trim();
+      const datoLocalEntidad = document.getElementById("datoLocalEntidad").value.trim();
+      const ofrecidoBase = document.getElementById("activoOfrecido").value.trim();
+      const solicitadoBase = document.getElementById("activoSolicitado").value.trim();
+
+      const extraLocal = [
+        redEconomica ? "Red: " + redEconomica : "",
+        datoLocalCuenta ? "Cuenta: " + datoLocalCuenta : "",
+        datoLocalEntidad ? "Entidad: " + datoLocalEntidad : ""
+      ].filter(Boolean).join(" | ");
+
+      const ofrecido = extraLocal ? (ofrecidoBase ? ofrecidoBase + " (" + extraLocal + ")" : extraLocal) : ofrecidoBase;
+      const solicitado = solicitadoBase;
+
+      if (!tratoIdBytes32 || !buyerAddr || !tokenAddr || !amountRaw) {
+        alert("Completá el código del trato, la contraparte, el token ($) y el monto ($).");
+        return;
+      }
+      if (!ethers.utils.isAddress(buyerAddr) || !ethers.utils.isAddress(tokenAddr)) {
+        alert("Revisá la dirección de la contraparte o del token.");
+        return;
+      }
+      if (!esPlazoValido()) {
+        alert("El plazo en días es obligatorio: ingresá 0 (en el momento) o la cantidad de días.");
+        document.getElementById("days").focus();
+        return;
+      }
+
+      const decimals = parseInt(document.getElementById("tokenDecimals").value || "6", 10);
+      let montoBN;
+      try {
+        montoBN = ethers.utils.parseUnits(amountRaw, decimals);
+        if (montoBN.lte(0)) throw new Error("Monto mayor a 0");
+      } catch (_) {
+        alert("Ingresá un monto válido en $ mayor a 0.");
+        return;
+      }
+
+      const days = parseInt(daysRaw, 10);
+      const c = getEscrowContract();
+      if (!c) return;
+
+      try {
+        const propioVerificado = await c.kycVerificado(userAddress);
+        const contraparteVerificada = await c.kycVerificado(buyerAddr);
+        if (!propioVerificado) { alert("Tu billetera todavía no tiene la verificación de identidad aprobada."); return; }
+        if (!contraparteVerificada) { alert("La billetera de la contraparte todavía no tiene la verificación de identidad aprobada."); return; }
+
+        const erc20 = new ethers.Contract(tokenAddr, [
+          "function approve(address spender, uint256 amount) returns (bool)",
+          "function allowance(address owner, address spender) view returns (uint256)"
+        ], signer);
+
+        const permitido = await erc20.allowance(userAddress, c.address);
+        if (permitido.lt(montoBN)) {
+          alert("Paso 1 de 2: autorizá la garantía de $" + amountRaw + " en tu billetera.");
+          const txA = await erc20.approve(c.address, montoBN);
+          await txA.wait();
+        }
+
+        alert("Paso 2 de 2: confirmá en tu billetera para bloquear $" + amountRaw + " y firmar el trato.");
+        const tx = await c.crearYGarantizarTrato({
+          tratoId: tratoIdBytes32,
+          comprador: buyerAddr,
+          tokenGarantia: tokenAddr,
+          montoGarantia: montoBN,
+          diasPlazo: days,
+          tipo: casoActual,
+          activoOfrecido: ofrecido,
+          activoSolicitado: solicitado
+        });
+        await tx.wait();
+
+        await registrarDeclaracion(tratoIdBytes32, extraLocal);
+        alert("Listo: garantía de $" + amountRaw + " bloqueada, declaración aceptada y trato firmado.");
+      } catch (e) {
+        console.error(e);
+        alert("No se pudo crear el trato: " + motivoError(e));
+      }
+    }
+
+    function setCaso(caso) {
+      ['A','B','C'].forEach(l => {
+        document.getElementById('tab'+l).classList.remove('active');
+        document.getElementById('panel'+l).classList.add('hidden');
+      });
+      document.getElementById('tab'+caso.toUpperCase()).classList.add('active');
+      document.getElementById('panel'+caso.toUpperCase()).classList.remove('hidden');
+      casoActual = { a:0, b:1, c:2 }[caso];
+    }
+    setCaso('a');
+
+    // ============ KYC (DNI + SELFIE) ============
+    const DIDIT_SESSION_ENDPOINT = "";
+    const DATOS_KYC_ENDPOINT = "";
+    let datosKyc = null;
+
+    async function iniciarKycDidit() {
+      if (!userAddress) { alert("Conectá tu billetera primero."); return; }
+      if (!DIDIT_SESSION_ENDPOINT) {
+        alert("Falta configurar el servidor de verificación (DNI + selfie).");
+        return;
+      }
+      try {
+        const res = await fetch(DIDIT_SESSION_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ wallet: userAddress })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.url) throw new Error(data.error || "No se pudo iniciar la verificación");
+        window.location.href = data.url;
+      } catch (e) {
+        console.error(e);
+        alert("Error al iniciar la verificación: " + motivoError(e));
+      }
+    }
+
+    async function chequearKyc(silencioso) {
+      const c = getEscrowContract(); if (!c) return;
+      try {
+        const verificado = await c.kycVerificado(userAddress);
+        kycOk = !!verificado;
+        const el = document.getElementById('kycStatus');
+        el.innerText = verificado ? "verificado ✓" : "sin verificar";
+        el.className = "font-mono text-xs px-2.5 py-1 rounded " + (verificado ? "bg-emerald-600 text-white" : "bg-zinc-100 text-zinc-600");
+        aplicarBloqueoKyc();
+      } catch (e) {
+        console.error(e);
+        if (silencioso !== true) alert("No se pudo comprobar tu verificación: " + motivoError(e));
+      }
+    }
+
+    function textoDeclaracionPlano() {
+      const d = datosKyc;
+      const billetera = userAddress || "(billetera sin conectar)";
+      let quien;
+      if (d) {
+        quien = "Yo, " + d.nombreCompleto + ", " + (d.tipoDocumento || "DNI") + " N° " + d.numeroDocumento +
+          (d.fechaNacimiento ? ", nacido/a el " + d.fechaNacimiento : "") +
+          (d.nacionalidad ? ", de nacionalidad " + d.nacionalidad : "") +
+          ", billetera " + billetera;
+      } else {
+        quien = "Yo, titular de la billetera " + billetera;
+      }
+      return quien + ", declaro bajo juramento que:
+" +
+        "1. Verifiqué mi identidad con DNI y selfie, y los datos son verdaderos.
+" +
+        "2. La información de este trato es real y actúo por cuenta propia.
+" +
+        "3. Trato Hecho custodia la garantía ($) y deja constancia, pero no participa del intercambio ni reemplaza a la justicia.
+" +
+        "4. Ante incumplimientos, la resolución corresponde ante la justicia y la evidencia registrada sirve de respaldo.";
+    }
+
+    function renderDeclaracion() {
+      document.getElementById('textoDeclaracion').textContent = textoDeclaracionPlano();
+    }
+
+    function actualizarBotonCrear() {
+      const acepto = document.getElementById('declAcepto').checked;
+      const tieneId = !!getTratoId();
+      document.getElementById('btnCrearTrato').disabled = !(kycOk && acepto && esPlazoValido() && tieneId);
+    }
+
+    async function cargarDatosKyc() {
+      if (!kycOk) { alert("Primero tenés que estar verificado."); return; }
+      if (!userAddress) { alert("Conectá tu billetera primero."); return; }
+      if (!DATOS_KYC_ENDPOINT) {
+        alert("Todavía no está conectado el servidor de datos verificados.");
+        return;
+      }
+      try {
+        const mensaje = "Trato Hecho: ver mis datos de verificación
+Billetera: " + userAddress + "
+Fecha: " + new Date().toISOString();
+        const firma = await signer.signMessage(mensaje);
+        const res = await fetch(DATOS_KYC_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ wallet: userAddress, mensaje, firma })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "error del servidor");
+        datosKyc = data;
+        renderDeclaracion();
+      } catch (e) {
+        console.error(e);
+        alert("No se pudieron cargar tus datos: " + motivoError(e));
+      }
+    }
+
+    async function registrarDeclaracion(tratoId, extraLocal = "") {
+      const fecha = new Date().toISOString();
+      const cadena = textoDeclaracionPlano() + "|" + userAddress + "|" + tratoId + "|" + extraLocal + "|" + (datosKyc ? datosKyc.sessionId : "") + "|" + fecha;
+      const hash = ethers.utils.id(cadena);
+      const c = getEscrowContract(); if (!c) return;
+      const tx = await c.registrarDeclaracionJurada(tratoId, hash);
+      await tx.wait();
+      descargarCopiaDeclaracion(tratoId, fecha, hash, cadena);
+    }
+
+    function descargarCopiaDeclaracion(tratoId, fecha, hash, cadena) {
+      const contenido = "DECLARACIÓN JURADA — TRATO HECHO
+
+Trato: " + tratoId + "
+Fecha de aceptación: " + fecha + "
+
+" +
+        textoDeclaracionPlano() + "
+
+Respaldo criptográfico (hash): " + hash + "
+
+Registro base:
+" + cadena + "
+";
+      const url = URL.createObjectURL(new Blob([contenido], { type: "text/plain;charset=utf-8" }));
+      const a = document.createElement("a");
+      a.href = url; a.download = "declaracion-jurada-" + tratoId.slice(0, 10) + ".txt";
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    }
+
+    // ---- Inicio ----
+    renderDeclaracion();
+    document.getElementById('contractAddress').value = CONTRATO_POR_DEFECTO;
+    actualizarResumenContrato();
+    sincronizarTokenPreset();
+    aplicarBloqueoKyc();
+    if (window.ethereum) { window.ethereum.on('accountsChanged', () => location.reload()); }
+
+    // ============ CASO A ============
+    let stepAState = 0;
+    function stepA(n) {
+      stepAState = n;
+      for (let i=1;i<=4;i++){
+        const dot = document.getElementById('dotA'+i);
+        dot.classList.remove('done','current');
+        if (i < n) dot.classList.add('done');
+        if (i === n) dot.classList.add('current');
+      }
+      document.getElementById('qrAreaA').classList.toggle('hidden', n < 2);
+      document.getElementById('trackingAreaA').classList.toggle('hidden', n < 3);
+      if (n === 2) generarQR('qrCodeA', 'TratoHecho-' + (getTratoId() || 'trato'));
+      if (n === 1) habilitarTransferenciaOnChain();
+      if (n === 4) confirmarRecepcionOnChain();
+    }
+
+    async function habilitarTransferenciaOnChain() {
+      const c = getEscrowContract(); if (!c) return;
+      try {
+        const tx = await c.habilitarTransferencia(getTratoId());
+        await tx.wait();
+        alert("Transferencia habilitada.");
+      } catch (e) { console.error(e); alert("No se pudo habilitar la transferencia: " + motivoError(e)); }
+    }
+
+    const NOMBRES_ESTADO = ["Creado", "Transferencia habilitada", "En proceso", "Entregado", "Liberado", "En disputa", "Cancelado"];
+    async function abrirDisputaOnChain() {
+      const motivo = document.getElementById('motivoDisputa').value.trim();
+      if (!motivo) { alert("Escribí el motivo de la disputa."); return; }
+      const c = getEscrowContract(); if (!c) return;
+      try {
+        const tx = await c.abrirDisputa(getTratoId(), motivo);
+        await tx.wait();
+        alert("Disputa abierta y registrada.");
+        verEstadoTrato();
+      } catch (e) { console.error(e); alert("No se pudo abrir la disputa: " + motivoError(e)); }
+    }
+
+    async function reclamarPorVencimientoOnChain() {
+      const c = getEscrowContract(); if (!c) return;
+      try {
+        const tx = await c.reclamarPorVencimiento(getTratoId());
+        await tx.wait();
+        alert("Garantía ($) reclamada por vencimiento.");
+        verEstadoTrato();
+      } catch (e) { console.error(e); alert("No se pudo reclamar: " + motivoError(e)); }
+    }
+
+    async function verEstadoTrato() {
+      const c = getEscrowContract(); if (!c) return;
+      try {
+        const b = await c.obtenerTratoBasico(getTratoId());
+        const decimals = parseInt(document.getElementById("tokenDecimals").value || "6", 10);
+        const montoFmt = ethers.utils.formatUnits(b.montoGarantia, decimals);
+        const plazoTexto = Number(b.plazoLimite) === 0
+          ? "En el momento (sin plazo en días)"
+          : new Date(Number(b.plazoLimite) * 1000).toLocaleDateString('es-AR');
+        document.getElementById('estadoTrato').innerText =
+          "Estado: " + NOMBRES_ESTADO[Number(b.estado)] +
+          " · Garantía: $" + montoFmt +
+          " · Plazo: " + plazoTexto;
+      } catch (e) { console.error(e); alert("No se pudo consultar el trato: " + motivoError(e)); }
+    }
+
+    async function confirmarRecepcionOnChain() {
+      const c = getEscrowContract(); if (!c) return;
+      try {
+        const tx = await c.confirmarRecepcion(getTratoId());
+        await tx.wait();
+        document.getElementById('seal').classList.add('stamped');
+        document.getElementById('sealText').classList.remove('hidden');
+        return true;
+      } catch (e) { console.error(e); alert("No se pudo confirmar la recepción: " + motivoError(e)); return false; }
+    }
+
+    function motivoError(e) {
+      return (e && (e.reason || (e.error && e.error.message) || (e.data && e.data.message) || e.message)) || "motivo desconocido";
+    }
+
+    async function confirmarEnvioA() {
+      const code = document.getElementById('trackingCodeA').value.trim();
+      if (!code) { alert("Ingresá el código de seguimiento."); return; }
+      const c = getEscrowContract(); if (!c) return;
+      try {
+        const tx = await c.registrarEnvio(getTratoId(), code);
+        await tx.wait();
+        alert("Despacho registrado.");
+      } catch (e) { console.error(e); alert("Error al registrar el envío: " + motivoError(e)); }
+    }
+
+    // ============ CASO B ============
+    async function registrarEnvioB(quien) {
+      const code = document.getElementById(quien === 'comprador' ? 'trackingB1' : 'trackingB2').value.trim();
+      if (!code) { alert("Ingresá el código de correo."); return; }
+      const c = getEscrowContract(); if (!c) return;
+      try {
+        const tx = await c.registrarEnvio(getTratoId(), code);
+        await tx.wait();
+        const idx = quien === 'comprador' ? 1 : 2;
+        document.getElementById('dotB'+idx).classList.add('done');
+        alert("Despacho de " + quien + " registrado.");
+      } catch (e) {
+        console.error(e);
+        alert("No se pudo registrar el despacho: " + motivoError(e));
+      }
+    }
+
+    async function confirmarAmbosB() {
+      const ok = await confirmarRecepcionOnChain();
+      if (ok) document.getElementById('dotB3').classList.add('done');
+    }
+
+    function generarQR(elementId, texto) {
+      const el = document.getElementById(elementId);
+      el.innerHTML = "";
+      new QRCode(el, { text: texto, width: 140, height: 140, colorDark:"#101B2D", colorLight:"#ffffff" });
+    }
+
+    // ============ CASO C: FIRMA PRESENCIAL ============
+    function setupFirma(canvasId) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let dibujando = false;
+
+      const getPos = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+          x: (clientX - rect.left) * scaleX,
+          y: (clientY - rect.top) * scaleY
+        };
+      };
+
+      const start = (e) => {
+        e.preventDefault();
+        dibujando = true;
+        const pos = getPos(e);
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+      };
+
+      const move = (e) => {
+        if (!dibujando) return;
+        e.preventDefault();
+        const pos = getPos(e);
+        ctx.lineWidth = 2.2;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = '#16264A';
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+      };
+
+      const stop = () => {
+        dibujando = false;
+      };
+
+      canvas.addEventListener('mousedown', start);
+      canvas.addEventListener('mousemove', move);
+      window.addEventListener('mouseup', stop);
+
+      canvas.addEventListener('touchstart', start, { passive: false });
+      canvas.addEventListener('touchmove', move, { passive: false });
+      window.addEventListener('touchend', stop);
+    }
+
+    setupFirma('firmaCanvas1');
+    setupFirma('firmaCanvas2');
+
+    function limpiarFirma(n) {
+      const canvas = document.getElementById('firmaCanvas'+n);
+      canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
+    }
+
+    async function cerrarTratoC() {
+      if (!kycOk) { alert("Verificación obligatoria: completá tu identidad antes de firmar."); return; }
+      const lugar = document.getElementById('lugarC').value.trim();
+      const fecha = document.getElementById('fechaC').value;
+      if (!lugar || !fecha) { alert("Completá lugar y fecha del encuentro."); return; }
+      const hashPlanilla = ethers.utils.id(getTratoId() + "|" + lugar + "|" + fecha);
+      const c = getEscrowContract(); if (!c) return;
+      try {
+        const tx = await c.registrarFirmaPresencial(getTratoId(), hashPlanilla);
+        await tx.wait();
+        const b = await c.obtenerTratoBasico(getTratoId());
+        if (Number(b.estado) === 4) {
+          document.getElementById('seal').classList.add('stamped');
+          document.getElementById('sealText').classList.remove('hidden');
+        } else {
+          alert("Tu firma quedó registrada. Falta la firma de la otra parte con el mismo lugar y fecha.");
+        }
+      } catch (e) {
+        console.error(e);
+        alert("No se pudo registrar la firma: " + motivoError(e));
+      }
+    }
+  </script>
+</body>
+</html>
