@@ -96,28 +96,28 @@
       </p>
     </div>
 
-    <!-- KYC (DNI + SELFIE) -->
+    <!-- KYC (DNI + SELFIE — OBLIGATORIO ANTES DE FIRMAR) -->
     <div class="card p-5 sm:p-6">
       <div class="flex items-start justify-between gap-3 mb-1">
         <h1 class="text-base font-semibold text-zinc-900">Verificación de identidad (KYC)</h1>
         <span id="kycStatus" class="font-mono text-xs px-2.5 py-1 rounded bg-zinc-100 text-zinc-600">sin verificar</span>
       </div>
       <p class="text-xs text-zinc-500 mb-4">
-        Comprador y vendedor deben completar su verificación de identidad (frente y dorso de DNI + prueba de vida con selfie) antes de operar. Se vincula una vez por wallet.
+        Obligatoria antes de firmar o crear un trato: DNI + selfie con prueba de vida. Se hace una sola vez por billetera.
       </p>
 
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-4 text-xs">
         <div class="border border-zinc-200 rounded-lg p-3 bg-zinc-50">
-          <span class="font-semibold text-zinc-800 block">1. Documento (DNI)</span>
-          <span class="text-zinc-500">Captura legible del documento vigente.</span>
+          <span class="font-semibold text-zinc-800 block">🪪 DNI</span>
+          <span class="text-zinc-500">Documento vigente legible.</span>
         </div>
         <div class="border border-zinc-200 rounded-lg p-3 bg-zinc-50">
-          <span class="font-semibold text-zinc-800 block">2. Selfie + Liveness</span>
-          <span class="text-zinc-500">Validación biométrica en tiempo real.</span>
+          <span class="font-semibold text-zinc-800 block">🤳 Selfie</span>
+          <span class="text-zinc-500">Validación facial en el momento.</span>
         </div>
         <div class="border border-zinc-200 rounded-lg p-3 bg-zinc-50">
-          <span class="font-semibold text-zinc-800 block">3. Estado en contrato</span>
-          <span class="text-zinc-500">Habilitación de tu wallet sin exponer datos.</span>
+          <span class="font-semibold text-zinc-800 block">✓ Habilitación</span>
+          <span class="text-zinc-500">Activa tu firma en el contrato.</span>
         </div>
       </div>
 
@@ -126,14 +126,14 @@
         <button onclick="chequearKyc()" class="btn-ghost flex-1 py-3 rounded-md text-xs font-semibold">Ya verifiqué, comprobar estado</button>
       </div>
       <p id="avisoKyc" class="text-xs mt-3 font-medium" style="color:#B45309;">
-        Paso obligatorio: hasta que tu wallet esté verificada no se habilitan la declaración jurada ni la creación del trato.
+        Verificación obligatoria: hasta validar tu identidad no podés aceptar la declaración jurada ni firmar el contrato.
       </p>
     </div>
 
     <!-- DECLARACIÓN JURADA (SOLO TILDE DE ACEPTACIÓN) -->
     <div id="cardDeclaracion" class="card p-5 sm:p-6">
       <h2 class="text-base font-semibold text-zinc-900 mb-1">Declaración jurada</h2>
-      <p class="text-xs text-zinc-500 mb-3">Revisá el texto con tus datos verificados y tildá el recuadro para aceptarla.</p>
+      <p class="text-xs text-zinc-500 mb-3">Revisá el texto y tildá el recuadro para aceptarla.</p>
       <div id="textoDeclaracion" class="text-xs leading-relaxed text-zinc-700 bg-zinc-50 border border-zinc-200 rounded-lg p-3 mb-3" style="white-space:pre-line;"></div>
       <button onclick="cargarDatosKyc()" class="btn-ghost w-full py-2.5 rounded-md text-xs font-semibold mb-3">
         Cargar mis datos verificados (firma gratuita en tu billetera)
@@ -146,44 +146,78 @@
 
     <!-- DATOS DEL TRATO -->
     <div class="card p-5 sm:p-6">
-      <h2 class="text-base font-semibold text-zinc-900 mb-1">Datos del trato</h2>
-      <p class="text-xs text-zinc-500 mb-4">Se completa una sola vez, antes de elegir cómo se entrega lo pactado.</p>
+      <div class="flex items-center justify-between gap-2 mb-1">
+        <h2 class="text-base font-semibold text-zinc-900">Datos del trato</h2>
+        <span class="text-[11px] font-medium px-2 py-0.5 rounded bg-zinc-100 text-zinc-600">
+          Custodia activa · <span id="resumenContrato" class="font-mono">0x249d...464B</span>
+        </span>
+      </div>
+      <p class="text-xs text-zinc-500 mb-4">Completá los datos esenciales antes de firmar el trato.</p>
+
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <span class="micro-label">Dirección del contrato Escrow</span>
-          <input type="text" id="contractAddress" placeholder="0x..." class="field font-mono">
+          <span class="micro-label">Código del trato (corto o ID)</span>
+          <input type="text" id="tratoId" placeholder="Ej: TRATO-101" oninput="actualizarBotonCrear()" class="field">
+          <span class="text-[11px] text-zinc-400 mt-1 block">Se convierte solo al formato del contrato.</span>
         </div>
+
         <div>
-          <span class="micro-label">ID del trato (bytes32)</span>
-          <input type="text" id="tratoId" placeholder="0x000...001" class="field font-mono">
+          <span class="micro-label">Contraparte (billetera o alias)</span>
+          <input type="text" id="buyerAddress" placeholder="Ej: 0xAbC...123" class="field">
         </div>
+
         <div>
-          <span class="micro-label">Dirección de la contraparte</span>
-          <input type="text" id="buyerAddress" placeholder="0x..." class="field font-mono">
+          <span class="micro-label">Token de garantía ($ Dólar)</span>
+          <div class="relative">
+            <span class="text-sm font-bold text-emerald-700 absolute left-3.5 top-1/2 -translate-y-1/2 select-none">$</span>
+            <select id="tokenPreset" onchange="sincronizarTokenPreset()" class="field font-medium pl-8">
+              <option value="0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238" data-decimals="6" selected>$ Dólar digital (USDC)</option>
+              <option value="0x7169D38820dfd117C3FA1f22a697dba58d90BA06" data-decimals="6">$ Dólar digital (USDT)</option>
+              <option value="custom" data-decimals="6">$ Dólar / Token personalizado...</option>
+            </select>
+          </div>
+          <div id="tokenCustomWrap" class="hidden mt-2">
+            <input type="text" id="tokenAddress" value="0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238" placeholder="Dirección del token 0x..." class="field font-mono text-xs">
+          </div>
+          <input type="hidden" id="tokenDecimals" value="6">
         </div>
+
         <div>
-          <span class="micro-label">Token de garantía</span>
-          <input type="text" id="tokenAddress" placeholder="0x..." class="field font-mono">
+          <span class="micro-label">Monto de garantía ($ respaldo)</span>
+          <div class="relative">
+            <span class="text-sm font-bold text-emerald-700 absolute left-3.5 top-1/2 -translate-y-1/2 select-none">$</span>
+            <input type="text" id="amount" inputmode="decimal" placeholder="Ej: 100" class="field font-mono pl-8">
+          </div>
+          <span class="text-[11px] text-zinc-500 mt-1 block">Referencia en $ del respaldo custodiado en el trato.</span>
         </div>
+
         <div>
-          <span class="micro-label">Monto de garantía</span>
-          <input type="text" id="amount" placeholder="1000000000000000000" class="field font-mono">
+          <span class="micro-label">Plazo en días (0 = en el momento)</span>
+          <input type="number" id="days" min="0" step="1" oninput="actualizarBotonCrear()" placeholder="Ej: 0 (en el acto) o días" class="field font-mono">
         </div>
-        <div>
-          <span class="micro-label">Plazo (días) — obligatorio (0 = en el momento)</span>
-          <input type="number" id="days" min="0" step="1" oninput="actualizarBotonCrear()" placeholder="Ej: 0 (en el acto) o cantidad de días" class="field font-mono">
-        </div>
+
         <div>
           <span class="micro-label">Lo que ofrezco</span>
-          <input type="text" id="activoOfrecido" placeholder="Ej: 500.000 CLP en efectivo" class="field">
+          <input type="text" id="activoOfrecido" placeholder="Ej: $500.000 CLP efectivo" class="field">
         </div>
-        <div>
+
+        <div class="sm:col-span-2">
           <span class="micro-label">Lo que pido a cambio</span>
-          <input type="text" id="activoSolicitado" placeholder="Ej: 620.000 ARS por transferencia" class="field">
+          <input type="text" id="activoSolicitado" placeholder="Ej: $620.000 ARS transferencia" class="field">
         </div>
       </div>
+
+      <!-- Ajuste técnico plegable para no mostrar códigos largos de entrada -->
+      <details class="mt-4 border border-zinc-200 rounded-lg p-3 bg-zinc-50 text-xs">
+        <summary class="cursor-pointer font-medium text-zinc-700 select-none">Ajustes avanzados del contrato (opcional)</summary>
+        <div class="mt-3">
+          <span class="micro-label">Contrato Escrow</span>
+          <input type="text" id="contractAddress" oninput="actualizarResumenContrato()" class="field font-mono text-xs">
+        </div>
+      </details>
+
       <button id="btnCrearTrato" onclick="crearTrato()" class="btn-primary w-full mt-5 py-3.5 rounded-md text-sm font-semibold shadow-sm">
-        Bloquear garantía y crear trato
+        Verificar, bloquear garantía ($) y firmar trato
       </button>
     </div>
 
@@ -222,7 +256,7 @@
         </button>
         <button onclick="stepA(4)" class="w-full text-left border border-zinc-200 rounded-lg p-4 hover:bg-zinc-50 transition-all">
           <span class="text-sm font-semibold text-zinc-900">④ Confirmar recepción → liberar garantía</span>
-          <p class="text-xs text-zinc-500 mt-1">El comprador confirma que recibió los pesos chilenos. Se libera el aval.</p>
+          <p class="text-xs text-zinc-500 mt-1">El comprador confirma que recibió lo pactado. Se libera el aval ($).</p>
         </button>
       </div>
 
@@ -242,7 +276,7 @@
     <!-- CASO B -->
     <div id="panelB" class="caso-panel hidden card p-5 sm:p-6">
       <h2 class="text-base font-semibold text-zinc-900 mb-1">Efectivo por correo, en ambos sentidos</h2>
-      <p class="text-xs text-zinc-500 mb-5">Ninguna transferencia bancaria: cada parte envía billetes por correo a la otra. Cada una registra su despacho desde su billetera, y el comprador confirma la recepción.</p>
+      <p class="text-xs text-zinc-500 mb-5">Cada parte envía efectivo por correo a la otra, registra su despacho desde su billetera y el comprador confirma la recepción.</p>
 
       <div class="flex items-center gap-2 mb-5">
         <div class="step-dot current" id="dotB1"></div><div class="step-dot" id="dotB2"></div>
@@ -251,14 +285,14 @@
 
       <div class="grid sm:grid-cols-2 gap-3 mb-4">
         <div class="border border-zinc-200 rounded-lg p-4">
-          <p class="text-sm font-semibold text-zinc-900 mb-2">Comprador → envía pesos argentinos</p>
+          <p class="text-sm font-semibold text-zinc-900 mb-2">Comprador → envía efectivo ($)</p>
           <button onclick="generarQR('qrCodeB1','Envio-Comprador')" class="btn-ghost w-full py-2 rounded-md text-xs font-semibold mb-2">Generar etiqueta de envío</button>
           <div id="qrCodeB1" class="flex justify-center my-2"></div>
           <input type="text" id="trackingB1" placeholder="Código de correo" class="field font-mono text-xs mb-2">
           <button onclick="registrarEnvioB('comprador')" class="btn-primary w-full py-2 rounded-md text-xs font-semibold">Registrar despacho</button>
         </div>
         <div class="border border-zinc-200 rounded-lg p-4">
-          <p class="text-sm font-semibold text-zinc-900 mb-2">Vendedor → envía pesos chilenos</p>
+          <p class="text-sm font-semibold text-zinc-900 mb-2">Vendedor → envía efectivo ($)</p>
           <button onclick="generarQR('qrCodeB2','Envio-Vendedor')" class="btn-ghost w-full py-2 rounded-md text-xs font-semibold mb-2">Generar etiqueta de envío</button>
           <div id="qrCodeB2" class="flex justify-center my-2"></div>
           <input type="text" id="trackingB2" placeholder="Código de correo" class="field font-mono text-xs mb-2">
@@ -266,18 +300,18 @@
         </div>
       </div>
 
-      <button onclick="confirmarAmbosB()" class="btn-primary w-full py-3.5 rounded-md text-sm font-semibold shadow-sm">Comprador confirma recepción → liberar garantía</button>
+      <button onclick="confirmarAmbosB()" class="btn-primary w-full py-3.5 rounded-md text-sm font-semibold shadow-sm">Comprador confirma recepción → liberar garantía ($)</button>
     </div>
 
     <!-- CASO C -->
     <div id="panelC" class="caso-panel hidden card p-5 sm:p-6">
       <h2 class="text-base font-semibold text-zinc-900 mb-1">Encuentro presencial</h2>
-      <p class="text-xs text-zinc-500 mb-5">Se coordina lugar y hora públicos. Cada parte firma desde su propia billetera, con el mismo lugar y fecha, y la garantía se libera cuando firman las dos.</p>
+      <p class="text-xs text-zinc-500 mb-5">Se coordina lugar y hora públicos. Cada parte firma desde su propia billetera con el mismo lugar y fecha.</p>
 
       <div class="grid sm:grid-cols-2 gap-4 mb-5">
         <div>
           <span class="micro-label">Lugar público</span>
-          <input type="text" id="lugarC" placeholder="Ej: Plaza 25 de Mayo, San Juan" class="field">
+          <input type="text" id="lugarC" placeholder="Ej: Plaza 25 de Mayo" class="field">
         </div>
         <div>
           <span class="micro-label">Fecha y hora</span>
@@ -286,228 +320,7 @@
       </div>
 
       <div class="border border-zinc-200 rounded-lg p-4 mb-4">
-        <p class="text-sm font-semibold text-zinc-900 mb-3">Planilla de conformidad (dibujo opcional de la firma en pantalla)</p>
+        <p class="text-sm font-semibold text-zinc-900 mb-3">Planilla de conformidad (dibujo opcional en pantalla)</p>
         <span class="micro-label">Firma parte 1 (vendedor)</span>
         <canvas id="firmaCanvas1" width="500" height="120" class="firma w-full mb-2"></canvas>
-        <button onclick="limpiarFirma(1)" class="text-xs text-brand-danger font-medium mb-4">Borrar firma</button>
-        <span class="micro-label">Firma parte 2 (comprador)</span>
-        <canvas id="firmaCanvas2" width="500" height="120" class="firma w-full mb-2"></canvas>
-        <button onclick="limpiarFirma(2)" class="text-xs text-brand-danger font-medium">Borrar firma</button>
-      </div>
-
-      <button onclick="cerrarTratoC()" class="btn-primary w-full py-3.5 rounded-md text-sm font-semibold shadow-sm">Firmar la planilla desde mi billetera</button>
-    </div>
-
-    <!-- PROBLEMAS CON EL TRATO -->
-    <div class="card p-5 sm:p-6">
-      <h2 class="text-base font-semibold text-zinc-900 mb-1">Estado y problemas del trato</h2>
-      <p class="text-xs text-zinc-500 mb-4">Consultá cómo está tu trato, abrí una disputa si algo salió mal, o reclamá la garantía si venció el plazo y el vendedor no cumplió.</p>
-      <button onclick="verEstadoTrato()" class="btn-ghost w-full py-3 rounded-md text-xs font-semibold mb-2">Ver estado del trato</button>
-      <p id="estadoTrato" class="text-xs text-zinc-700 font-mono mb-4"></p>
-      <span class="micro-label">Motivo de la disputa</span>
-      <input type="text" id="motivoDisputa" placeholder="Ej: no recibí el envío" class="field mb-3">
-      <div class="flex flex-col sm:flex-row gap-2">
-        <button onclick="abrirDisputaOnChain()" class="btn-primary flex-1 py-3 rounded-md text-xs font-semibold">Abrir disputa</button>
-        <button onclick="reclamarPorVencimientoOnChain()" class="btn-ghost flex-1 py-3 rounded-md text-xs font-semibold">Reclamar garantía por vencimiento (comprador)</button>
-      </div>
-    </div>
-
-    <!-- SELLO -->
-    <div class="flex flex-col items-center" id="sealWrap">
-      <div class="seal" id="seal">
-        <span class="text-white text-[10px] font-bold text-center leading-tight">TRATO<br>HECHO</span>
-      </div>
-      <p id="sealText" class="text-xs text-zinc-500 mt-2 hidden">Garantía liberada · registrado en el contrato</p>
-    </div>
-
-    <!-- MARCO LEGAL -->
-    <div class="card p-4 flex items-start gap-2.5">
-      <span class="w-2 h-2 rounded-full bg-brand-ok mt-1 flex-shrink-0"></span>
-      <p class="text-xs leading-relaxed text-zinc-600">
-        <span class="font-semibold text-zinc-800">Alcance del servicio:</span> Trato Hecho custodia una garantía y registra evidencia (etiquetas, códigos de seguimiento, firmas) para reducir el riesgo de estafa entre las partes. No sustituye una instancia judicial — ante un incumplimiento, la resolución queda entre comprador y vendedor ante la justicia correspondiente, y la evidencia registrada acá sirve de respaldo.
-      </p>
-    </div>
-
-  </main>
-
-  <script>
-    // ============ ESTADO Y CONEXIÓN WEB3 ============
-    let provider, signer, userAddress;
-
-    const abiEscrow = [
-      "function kycVerificado(address) view returns (bool)",
-      "function crearYGarantizarTrato(tuple(bytes32 tratoId, address comprador, address tokenGarantia, uint256 montoGarantia, uint256 diasPlazo, uint8 tipo, string activoOfrecido, string activoSolicitado) _p) external",
-      "function registrarDeclaracionJurada(bytes32 _tratoId, bytes32 _hashDeclaracion) external",
-      "function habilitarTransferencia(bytes32 _tratoId) external",
-      "function registrarEnvio(bytes32 _tratoId, string _trackingCode) external",
-      "function confirmarRecepcion(bytes32 _tratoId) external",
-      "function registrarFirmaPresencial(bytes32 _tratoId, bytes32 _hashPlanilla) external",
-      "function abrirDisputa(bytes32 _tratoId, string _motivo) external",
-      "function reclamarPorVencimiento(bytes32 _tratoId) external",
-      "function obtenerTratoBasico(bytes32) view returns (address vendedor, address comprador, address tokenGarantia, uint256 montoGarantia, uint256 plazoLimite, uint8 estado, uint8 tipo)",
-      "function obtenerTratoActivos(bytes32) view returns (string activoOfrecido, string activoSolicitado)",
-      "function obtenerTratoEnvios(bytes32) view returns (bool envioVendedorConfirmado, bool envioCompradorConfirmado, string trackingVendedor, string trackingComprador)",
-      "function obtenerTratoEvidencia(bytes32) view returns (bytes32 hashDeclaracionJurada, bytes32 hashPlanillaPresencial, bool firmaVendedor, bool firmaComprador, bool existe)"
-    ];
-
-    const CONTRATO_POR_DEFECTO = "0x249dC2f1DD175B4B6895F5ff9ed655a4E0e0464B";
-
-    let kycOk = false;
-    function aplicarBloqueoKyc() {
-      const card = document.getElementById('cardDeclaracion');
-      const aviso = document.getElementById('avisoKyc');
-      card.style.opacity = kycOk ? '1' : '0.45';
-      card.style.pointerEvents = kycOk ? 'auto' : 'none';
-      if (!kycOk) {
-        document.getElementById('declAcepto').checked = false;
-      }
-      actualizarBotonCrear();
-      aviso.style.display = kycOk ? 'none' : 'block';
-    }
-
-    let casoActual = 0;
-
-    async function connectWallet() {
-      if (!window.ethereum) { alert("No se detectó MetaMask. Instalá la extensión para continuar."); return; }
-      try {
-        provider = new ethers.providers.Web3Provider(window.ethereum);
-        await provider.send("eth_requestAccounts", []);
-        signer = provider.getSigner();
-        userAddress = await signer.getAddress();
-        document.getElementById("walletStatus").innerText = userAddress.substring(0,6) + "..." + userAddress.substring(38);
-        document.getElementById("walletStatus").classList.add("font-semibold");
-        document.getElementById("btnConnect").innerText = "Conectada";
-        renderDeclaracion();
-        chequearKyc(true);
-      } catch (e) {
-        console.error(e);
-        alert("Error al conectar la billetera.");
-      }
-    }
-
-    function getEscrowContract() {
-      const addr = document.getElementById("contractAddress").value.trim();
-      if (!addr || !signer) { alert("Completá la dirección del contrato y conectá tu billetera."); return null; }
-      return new ethers.Contract(addr, abiEscrow, signer);
-    }
-
-    function getTratoId() {
-      return document.getElementById("tratoId").value.trim();
-    }
-
-    function esPlazoValido() {
-      const raw = document.getElementById("days").value.trim();
-      if (raw === "") return false;
-      const num = Number(raw);
-      return Number.isInteger(num) && num >= 0;
-    }
-
-    async function crearTrato() {
-      if (!kycOk) { alert("Primero tenés que verificar tu identidad (KYC)."); return; }
-      if (!document.getElementById('declAcepto').checked) { alert("Tildá el casillero para aceptar la declaración jurada."); return; }
-      const buyerAddr = document.getElementById("buyerAddress").value.trim();
-      const tokenAddr = document.getElementById("tokenAddress").value.trim();
-      const amount = document.getElementById("amount").value.trim();
-      const daysRaw = document.getElementById("days").value.trim();
-      const ofrecido = document.getElementById("activoOfrecido").value.trim();
-      const solicitado = document.getElementById("activoSolicitado").value.trim();
-      if (!buyerAddr || !tokenAddr || !amount || !getTratoId()) {
-        alert("Completá ID del trato, contraparte, token y monto.");
-        return;
-      }
-      if (!esPlazoValido()) {
-        alert("El plazo en días es obligatorio: ingresá 0 (para intercambio en el momento) o la cantidad de días acordada.");
-        document.getElementById("days").focus();
-        return;
-      }
-      const days = parseInt(daysRaw, 10);
-      const c = getEscrowContract();
-      if (!c) return;
-      try {
-        const propioVerificado = await c.kycVerificado(userAddress);
-        const contraparteVerificada = await c.kycVerificado(buyerAddr);
-        if (!propioVerificado) { alert("Tu wallet todavía no tiene KYC verificado."); return; }
-        if (!contraparteVerificada) { alert("La wallet de la contraparte todavía no tiene KYC verificado."); return; }
-
-        const erc20 = new ethers.Contract(tokenAddr, [
-          "function approve(address spender, uint256 amount) returns (bool)",
-          "function allowance(address owner, address spender) view returns (uint256)"
-        ], signer);
-        const montoBN = ethers.BigNumber.from(amount);
-        const permitido = await erc20.allowance(userAddress, c.address);
-        if (permitido.lt(montoBN)) {
-          alert("Paso 1 de 2: autorizá al contrato a custodiar tu garantía (confirmá en tu billetera).");
-          const txA = await erc20.approve(c.address, montoBN);
-          await txA.wait();
-        }
-        alert("Paso 2 de 2: bloquear la garantía y crear el trato (confirmá en tu billetera).");
-
-        const tx = await c.crearYGarantizarTrato({
-          tratoId: getTratoId(),
-          comprador: buyerAddr,
-          tokenGarantia: tokenAddr,
-          montoGarantia: amount,
-          diasPlazo: days,
-          tipo: casoActual,
-          activoOfrecido: ofrecido,
-          activoSolicitado: solicitado
-        });
-        alert("Transacción enviada. Esperando confirmación...");
-        await tx.wait();
-
-        await registrarDeclaracion(getTratoId());
-        alert("Trato creado, garantía bloqueada y declaración jurada registrada.");
-      } catch (e) {
-        console.error(e);
-        alert("Error al crear el trato: " + motivoError(e));
-      }
-    }
-
-    // ============ SELECTOR DE CASOS ============
-    function setCaso(caso) {
-      ['A','B','C'].forEach(l => {
-        document.getElementById('tab'+l).classList.remove('active');
-        document.getElementById('panel'+l).classList.add('hidden');
-      });
-      document.getElementById('tab'+caso.toUpperCase()).classList.add('active');
-      document.getElementById('panel'+caso.toUpperCase()).classList.remove('hidden');
-      casoActual = { a:0, b:1, c:2 }[caso];
-    }
-    setCaso('a');
-
-    // ============ KYC (DNI + SELFIE) ============
-    const DIDIT_SESSION_ENDPOINT = ""; // ej: "https://tu-backend.vercel.app/api/crear-sesion-kyc"
-
-    async function iniciarKycDidit() {
-      if (!userAddress) { alert("Conectá tu billetera primero."); return; }
-      if (!DIDIT_SESSION_ENDPOINT) {
-        alert("Falta configurar DIDIT_SESSION_ENDPOINT con el backend que crea la sesión de verificación (DNI + selfie).");
-        return;
-      }
-      try {
-        const res = await fetch(DIDIT_SESSION_ENDPOINT, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ wallet: userAddress })
-        });
-        const data = await res.json();
-        if (!res.ok || !data.url) throw new Error(data.error || "No se pudo iniciar la sesión KYC");
-        window.location.href = data.url;
-      } catch (e) {
-        console.error(e);
-        alert("Error al iniciar KYC: " + motivoError(e));
-      }
-    }
-
-    async function chequearKyc(silencioso) {
-      const c = getEscrowContract(); if (!c) return;
-      try {
-        const verificado = await c.kycVerificado(userAddress);
-        kycOk = !!verificado;
-        const el = document.getElementById('kycStatus');
-        el.innerText = verificado ? "verificado ✓" : "sin verificar";
-        el.className = "font-mono text-xs px-2.5 py-1 rounded " + (verificado ? "bg-emerald-600 text-white" : "bg-zinc-100 text-zinc-600");
-        aplicarBloqueoKyc();
-      } catch (e) {
-        console.error(e);
-        if (silencioso !== true) alert("No se pudo consultar el estado de
+        <button onclick
