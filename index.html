@@ -96,30 +96,51 @@
       </p>
     </div>
 
-    <!-- KYC -->
+    <!-- KYC (DNI + SELFIE) -->
     <div class="card p-5 sm:p-6">
-      <h1 class="text-base font-semibold text-zinc-900 mb-1">Verificación de identidad</h1>
-      <p class="text-xs text-zinc-500 mb-4">Vendedor y comprador necesitan verificar su identidad antes de crear un trato. Se hace una sola vez por wallet.</p>
-      <div class="flex items-center gap-2 mb-4">
-        <span class="text-xs font-medium text-zinc-700">Estado de tu wallet:</span>
-        <span id="kycStatus" class="font-mono text-xs px-2 py-0.5 rounded bg-zinc-100 text-zinc-600">sin verificar</span>
+      <div class="flex items-start justify-between gap-3 mb-1">
+        <h1 class="text-base font-semibold text-zinc-900">Verificación de identidad (KYC)</h1>
+        <span id="kycStatus" class="font-mono text-xs px-2.5 py-1 rounded bg-zinc-100 text-zinc-600">sin verificar</span>
       </div>
+      <p class="text-xs text-zinc-500 mb-4">
+        Comprador y vendedor deben completar su verificación de identidad (frente y dorso de DNI + prueba de vida con selfie) antes de operar. Se vincula una vez por wallet.
+      </p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-4 text-xs">
+        <div class="border border-zinc-200 rounded-lg p-3 bg-zinc-50">
+          <span class="font-semibold text-zinc-800 block">1. Documento (DNI)</span>
+          <span class="text-zinc-500">Captura legible del documento vigente.</span>
+        </div>
+        <div class="border border-zinc-200 rounded-lg p-3 bg-zinc-50">
+          <span class="font-semibold text-zinc-800 block">2. Selfie + Liveness</span>
+          <span class="text-zinc-500">Validación biométrica en tiempo real.</span>
+        </div>
+        <div class="border border-zinc-200 rounded-lg p-3 bg-zinc-50">
+          <span class="font-semibold text-zinc-800 block">3. Estado en contrato</span>
+          <span class="text-zinc-500">Habilitación de tu wallet sin exponer datos.</span>
+        </div>
+      </div>
+
       <div class="flex flex-col sm:flex-row gap-2">
         <button onclick="iniciarKycDidit()" class="btn-primary flex-1 py-3 rounded-md text-xs font-semibold">Verificar identidad (DNI + selfie)</button>
         <button onclick="chequearKyc()" class="btn-ghost flex-1 py-3 rounded-md text-xs font-semibold">Ya verifiqué, comprobar estado</button>
       </div>
-      <p id="avisoKyc" class="text-xs mt-3 font-medium" style="color:#B45309;">Paso obligatorio: hasta que tu wallet esté verificada no se habilitan la declaración jurada ni la creación del trato.</p>
+      <p id="avisoKyc" class="text-xs mt-3 font-medium" style="color:#B45309;">
+        Paso obligatorio: hasta que tu wallet esté verificada no se habilitan la declaración jurada ni la creación del trato.
+      </p>
     </div>
 
-    <!-- DECLARACIÓN JURADA -->
+    <!-- DECLARACIÓN JURADA (SOLO TILDE DE ACEPTACIÓN) -->
     <div id="cardDeclaracion" class="card p-5 sm:p-6">
       <h2 class="text-base font-semibold text-zinc-900 mb-1">Declaración jurada</h2>
-      <p class="text-xs text-zinc-500 mb-3">Se completa con tus datos de identidad ya verificados. Leela y tildá el casillero para aceptarla.</p>
+      <p class="text-xs text-zinc-500 mb-3">Revisá el texto con tus datos verificados y tildá el recuadro para aceptarla.</p>
       <div id="textoDeclaracion" class="text-xs leading-relaxed text-zinc-700 bg-zinc-50 border border-zinc-200 rounded-lg p-3 mb-3" style="white-space:pre-line;"></div>
-      <button onclick="cargarDatosKyc()" class="btn-ghost w-full py-2.5 rounded-md text-xs font-semibold mb-3">Cargar mis datos verificados (pide una firma gratuita en tu billetera)</button>
-      <label class="flex items-start gap-2.5 cursor-pointer">
-        <input type="checkbox" id="declAcepto" onchange="actualizarBotonCrear()" class="mt-0.5 h-4 w-4 flex-shrink-0">
-        <span class="text-xs font-medium text-zinc-800">Leí y acepto esta declaración jurada.</span>
+      <button onclick="cargarDatosKyc()" class="btn-ghost w-full py-2.5 rounded-md text-xs font-semibold mb-3">
+        Cargar mis datos verificados (firma gratuita en tu billetera)
+      </button>
+      <label class="flex items-center gap-2.5 cursor-pointer p-3 rounded-lg border border-zinc-200 hover:bg-zinc-50 transition-colors">
+        <input type="checkbox" id="declAcepto" onchange="actualizarBotonCrear()" class="h-4 w-4 accent-brand-blue flex-shrink-0">
+        <span class="text-xs font-semibold text-zinc-800">Acepto esta declaración jurada.</span>
       </label>
     </div>
 
@@ -161,7 +182,9 @@
           <input type="text" id="activoSolicitado" placeholder="Ej: 620.000 ARS por transferencia" class="field">
         </div>
       </div>
-      <button id="btnCrearTrato" onclick="crearTrato()" class="btn-primary w-full mt-5 py-3.5 rounded-md text-sm font-semibold shadow-sm">Bloquear garantía y crear trato</button>
+      <button id="btnCrearTrato" onclick="crearTrato()" class="btn-primary w-full mt-5 py-3.5 rounded-md text-sm font-semibold shadow-sm">
+        Bloquear garantía y crear trato
+      </button>
     </div>
 
     <!-- SELECTOR DE CASOS -->
@@ -311,7 +334,6 @@
     // ============ ESTADO Y CONEXIÓN WEB3 ============
     let provider, signer, userAddress;
 
-    // ABI real de TratoHecho.sol
     const abiEscrow = [
       "function kycVerificado(address) view returns (bool)",
       "function crearYGarantizarTrato(tuple(bytes32 tratoId, address comprador, address tokenGarantia, uint256 montoGarantia, uint256 diasPlazo, uint8 tipo, string activoOfrecido, string activoSolicitado) _p) external",
@@ -328,22 +350,21 @@
       "function obtenerTratoEvidencia(bytes32) view returns (bytes32 hashDeclaracionJurada, bytes32 hashPlanillaPresencial, bool firmaVendedor, bool firmaComprador, bool existe)"
     ];
 
-    // Contrato desplegado en Sepolia (se puede cambiar en el campo del formulario)
     const CONTRATO_POR_DEFECTO = "0x249dC2f1DD175B4B6895F5ff9ed655a4E0e0464B";
 
-    // La verificación de identidad (KYC) es obligatoria antes de firmar y crear un trato
     let kycOk = false;
     function aplicarBloqueoKyc() {
       const card = document.getElementById('cardDeclaracion');
-      const btn = document.getElementById('btnCrearTrato');
       const aviso = document.getElementById('avisoKyc');
       card.style.opacity = kycOk ? '1' : '0.45';
       card.style.pointerEvents = kycOk ? 'auto' : 'none';
+      if (!kycOk) {
+        document.getElementById('declAcepto').checked = false;
+      }
       actualizarBotonCrear();
       aviso.style.display = kycOk ? 'none' : 'block';
     }
 
-    // Caso A = 0, Caso B = 1, Caso C = 2 (debe coincidir con el enum TipoResolucion del contrato)
     let casoActual = 0;
 
     async function connectWallet() {
@@ -355,7 +376,6 @@
         userAddress = await signer.getAddress();
         document.getElementById("walletStatus").innerText = userAddress.substring(0,6) + "..." + userAddress.substring(38);
         document.getElementById("walletStatus").classList.add("font-semibold");
-        document.getElementById("walletStatus").style.color = "var(--navy)";
         document.getElementById("btnConnect").innerText = "Conectada";
         renderDeclaracion();
         chequearKyc(true);
@@ -366,25 +386,28 @@
     }
 
     function getEscrowContract() {
-      const addr = document.getElementById("contractAddress").value;
+      const addr = document.getElementById("contractAddress").value.trim();
       if (!addr || !signer) { alert("Completá la dirección del contrato y conectá tu billetera."); return null; }
       return new ethers.Contract(addr, abiEscrow, signer);
     }
 
     function getTratoId() {
-      return document.getElementById("tratoId").value;
+      return document.getElementById("tratoId").value.trim();
     }
 
     async function crearTrato() {
-      if (!kycOk) { alert("Primero tenés que verificar tu identidad (KYC). Es obligatorio antes de aceptar la declaración y crear un trato."); return; }
-      if (!document.getElementById('declAcepto').checked) { alert("Tenés que aceptar la declaración jurada (tildá el casillero)."); return; }
-      const buyerAddr = document.getElementById("buyerAddress").value;
-      const tokenAddr = document.getElementById("tokenAddress").value;
-      const amount = document.getElementById("amount").value;
+      if (!kycOk) { alert("Primero tenés que verificar tu identidad (KYC)."); return; }
+      if (!document.getElementById('declAcepto').checked) { alert("Tildá el casillero para aceptar la declaración jurada."); return; }
+      const buyerAddr = document.getElementById("buyerAddress").value.trim();
+      const tokenAddr = document.getElementById("tokenAddress").value.trim();
+      const amount = document.getElementById("amount").value.trim();
       const days = document.getElementById("days").value;
-      const ofrecido = document.getElementById("activoOfrecido").value;
-      const solicitado = document.getElementById("activoSolicitado").value;
-      if (!buyerAddr || !tokenAddr || !amount) { alert("Completá comprador, token y monto."); return; }
+      const ofrecido = document.getElementById("activoOfrecido").value.trim();
+      const solicitado = document.getElementById("activoSolicitado").value.trim();
+      if (!buyerAddr || !tokenAddr || !amount || !getTratoId()) {
+        alert("Completá ID del trato, contraparte, token y monto.");
+        return;
+      }
       const c = getEscrowContract();
       if (!c) return;
       try {
@@ -393,8 +416,6 @@
         if (!propioVerificado) { alert("Tu wallet todavía no tiene KYC verificado."); return; }
         if (!contraparteVerificada) { alert("La wallet de la contraparte todavía no tiene KYC verificado."); return; }
 
-        // El contrato cobra la garantía con transferFrom, así que primero hay
-        // que autorizarlo a mover ese monto del token (approve).
         const erc20 = new ethers.Contract(tokenAddr, [
           "function approve(address spender, uint256 amount) returns (bool)",
           "function allowance(address owner, address spender) view returns (uint256)"
@@ -423,7 +444,10 @@
 
         await registrarDeclaracion(getTratoId());
         alert("Trato creado, garantía bloqueada y declaración jurada registrada.");
-      } catch (e) { console.error(e); alert("Error al crear el trato. Revisá la consola."); }
+      } catch (e) {
+        console.error(e);
+        alert("Error al crear el trato: " + motivoError(e));
+      }
     }
 
     // ============ SELECTOR DE CASOS ============
@@ -438,27 +462,28 @@
     }
     setCaso('a');
 
-    // ============ KYC (Didit) ============
-    // El link de sesión real se genera en el backend liviano (ver repo
-    // trato-hecho-backend) que llama a la API de Didit y devuelve la URL
-    // de verificación hospedada. Completá esta constante con tu URL de
-    // Vercel una vez desplegado el backend, ej:
-    // "https://trato-hecho-backend.vercel.app/api/crear-sesion-kyc"
-    const DIDIT_SESSION_ENDPOINT = "";
+    // ============ KYC (DNI + SELFIE) ============
+    const DIDIT_SESSION_ENDPOINT = ""; // ej: "https://tu-backend.vercel.app/api/crear-sesion-kyc"
 
     async function iniciarKycDidit() {
       if (!userAddress) { alert("Conectá tu billetera primero."); return; }
       if (!DIDIT_SESSION_ENDPOINT) {
-        alert("Falta conectar el backend que genera la sesión de Didit. Por ahora este botón es un placeholder.");
+        alert("Falta configurar DIDIT_SESSION_ENDPOINT con el backend que crea la sesión de verificación (DNI + selfie).");
         return;
       }
-      const res = await fetch(DIDIT_SESSION_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wallet: userAddress })
-      });
-      const data = await res.json();
-      window.location.href = data.url; // redirige a la sesión hospedada de Didit
+      try {
+        const res = await fetch(DIDIT_SESSION_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ wallet: userAddress })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.url) throw new Error(data.error || "No se pudo iniciar la sesión KYC");
+        window.location.href = data.url;
+      } catch (e) {
+        console.error(e);
+        alert("Error al iniciar KYC: " + motivoError(e));
+      }
     }
 
     async function chequearKyc(silencioso) {
@@ -468,14 +493,15 @@
         kycOk = !!verificado;
         const el = document.getElementById('kycStatus');
         el.innerText = verificado ? "verificado ✓" : "sin verificar";
-        el.className = "font-mono text-xs px-2 py-0.5 rounded " + (verificado ? "bg-emerald-600 text-white" : "bg-black/10");
+        el.className = "font-mono text-xs px-2.5 py-1 rounded " + (verificado ? "bg-emerald-600 text-white" : "bg-zinc-100 text-zinc-600");
         aplicarBloqueoKyc();
-      } catch (e) { console.error(e); if (silencioso !== true) alert("No se pudo consultar el estado de KYC."); }
+      } catch (e) {
+        console.error(e);
+        if (silencioso !== true) alert("No se pudo consultar el estado de KYC: " + motivoError(e));
+      }
     }
 
-    // ============ DECLARACIÓN JURADA (casillero) ============
-    // Los datos de identidad salen del servidor de verificación (Didit) y nunca
-    // se guardan en la blockchain: en el contrato queda solo un hash.
+    // ============ DECLARACIÓN JURADA ============
     const DATOS_KYC_ENDPOINT = ""; // ej: "https://tu-backend.vercel.app/api/datos-kyc"
     let datosKyc = null;
 
@@ -484,7 +510,7 @@
       const billetera = userAddress || "(billetera sin conectar)";
       let quien;
       if (d) {
-        quien = "Yo, " + d.nombreCompleto + ", " + (d.tipoDocumento || "documento") + " N° " + d.numeroDocumento +
+        quien = "Yo, " + d.nombreCompleto + ", " + (d.tipoDocumento || "DNI") + " N° " + d.numeroDocumento +
           (d.fechaNacimiento ? ", nacido/a el " + d.fechaNacimiento : "") +
           (d.nacionalidad ? ", de nacionalidad " + d.nacionalidad : "") +
           ", titular de la billetera " + billetera;
@@ -492,22 +518,25 @@
         quien = "Yo, titular de la billetera " + billetera;
       }
       return quien + ", declaro bajo juramento que:\n" +
-        "1. Los datos de identidad de esta declaración son verdaderos y corresponden a mi persona.\n" +
-        "2. La información que aporto para este trato es verdadera y actúo por cuenta propia.\n" +
-        "3. Entiendo que Trato Hecho custodia una garantía y deja constancia de la operación, pero no es parte de ella ni reemplaza una instancia judicial.\n" +
-        "4. Ante un incumplimiento entre las partes, la resolución me corresponde frente a la justicia, y la evidencia registrada puede utilizarse como respaldo.";
+        "1. Mi identidad fue verificada mediante documento y prueba de vida (selfie), y los datos aportados son verdaderos.\n" +
+        "2. La información declarada para este trato es veraz y actúo por cuenta propia.\n" +
+        "3. Entiendo que Trato Hecho custodia una garantía y deja constancia de la operación, pero no es parte del intercambio ni reemplaza una instancia judicial.\n" +
+        "4. Ante cualquier incumplimiento entre las partes, la resolución corresponde ante la justicia, sirviendo la evidencia registrada como respaldo.";
     }
+
     function renderDeclaracion() {
       document.getElementById('textoDeclaracion').textContent = textoDeclaracionPlano();
     }
+
     function actualizarBotonCrear() {
       const acepto = document.getElementById('declAcepto').checked;
       document.getElementById('btnCrearTrato').disabled = !(kycOk && acepto);
     }
+
     async function cargarDatosKyc() {
       if (!userAddress) { alert("Conectá tu billetera primero."); return; }
       if (!DATOS_KYC_ENDPOINT) {
-        alert("Todavía no está conectado el servidor de verificación (Didit), por eso no se pueden traer tus datos. Mientras tanto, la declaración se muestra con tu billetera.");
+        alert("Todavía no está conectado DATOS_KYC_ENDPOINT. Mientras tanto, la declaración se muestra vinculada a tu wallet.");
         return;
       }
       try {
@@ -522,12 +551,14 @@
         if (!res.ok) throw new Error(data.error || "error del servidor");
         datosKyc = data;
         renderDeclaracion();
-      } catch (e) { console.error(e); alert("No se pudieron traer tus datos: " + motivoError(e)); }
+      } catch (e) {
+        console.error(e);
+        alert("No se pudieron traer tus datos: " + motivoError(e));
+      }
     }
+
     async function registrarDeclaracion(tratoId) {
       const fecha = new Date().toISOString();
-      // El hash incluye el texto aceptado, la billetera, el trato, la fecha y el ID de sesión de la
-      // verificación (un valor no adivinable), para dejar una huella que no revela datos personales.
       const cadena = textoDeclaracionPlano() + "|" + userAddress + "|" + tratoId + "|" + (datosKyc ? datosKyc.sessionId : "") + "|" + fecha;
       const hash = ethers.utils.id(cadena);
       const c = getEscrowContract(); if (!c) return;
@@ -535,7 +566,7 @@
       await tx.wait();
       descargarCopiaDeclaracion(tratoId, fecha, hash, cadena);
     }
-    // Copia para guardar: permite comprobar más adelante que el hash del contrato corresponde a este texto.
+
     function descargarCopiaDeclaracion(tratoId, fecha, hash, cadena) {
       const contenido = "DECLARACIÓN JURADA — TRATO HECHO\n\nTrato: " + tratoId + "\nFecha de aceptación: " + fecha + "\n\n" +
         textoDeclaracionPlano() + "\n\nHash registrado en el contrato: " + hash +
@@ -546,13 +577,13 @@
       document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
     }
 
-    // ---- Inicio de la página ----
+    // ---- Inicio ----
     renderDeclaracion();
     document.getElementById('contractAddress').value = CONTRATO_POR_DEFECTO;
     aplicarBloqueoKyc();
     if (window.ethereum) { window.ethereum.on('accountsChanged', () => location.reload()); }
 
-    // ============ CASO A: transferencia + correo ============
+    // ============ CASO A ============
     let stepAState = 0;
     function stepA(n) {
       stepAState = n;
@@ -578,7 +609,6 @@
       } catch (e) { console.error(e); alert("No se pudo habilitar la transferencia: " + motivoError(e)); }
     }
 
-    // ===== Problemas con el trato: disputas, vencimiento y estado =====
     const NOMBRES_ESTADO = ["Creado", "Transferencia habilitada", "En proceso", "Entregado", "Liberado", "En disputa", "Cancelado"];
     async function abrirDisputaOnChain() {
       const motivo = document.getElementById('motivoDisputa').value.trim();
@@ -591,6 +621,7 @@
         verEstadoTrato();
       } catch (e) { console.error(e); alert("No se pudo abrir la disputa: " + motivoError(e)); }
     }
+
     async function reclamarPorVencimientoOnChain() {
       const c = getEscrowContract(); if (!c) return;
       try {
@@ -600,12 +631,12 @@
         verEstadoTrato();
       } catch (e) { console.error(e); alert("No se pudo reclamar: " + motivoError(e)); }
     }
+
     async function verEstadoTrato() {
       const c = getEscrowContract(); if (!c) return;
       try {
         const b = await c.obtenerTratoBasico(getTratoId());
         const plazo = new Date(Number(b.plazoLimite) * 1000).toLocaleDateString('es-AR');
-        // 6 decimales: token de prueba tipo USDC
         document.getElementById('estadoTrato').innerText =
           "Estado: " + NOMBRES_ESTADO[Number(b.estado)] +
           " · Garantía en custodia: " + ethers.utils.formatUnits(b.montoGarantia, 6) +
@@ -624,25 +655,24 @@
       } catch (e) { console.error(e); alert("No se pudo confirmar la recepción: " + motivoError(e)); return false; }
     }
 
-    // Extrae el motivo legible de un error de la billetera o del contrato
     function motivoError(e) {
       return (e && (e.reason || (e.error && e.error.message) || (e.data && e.data.message) || e.message)) || "motivo desconocido";
     }
 
     async function confirmarEnvioA() {
-      const code = document.getElementById('trackingCodeA').value;
+      const code = document.getElementById('trackingCodeA').value.trim();
       if (!code) { alert("Ingresá el código de seguimiento."); return; }
       const c = getEscrowContract(); if (!c) return;
       try {
         const tx = await c.registrarEnvio(getTratoId(), code);
         await tx.wait();
         alert("Despacho registrado.");
-      } catch (e) { console.error(e); alert("Error al registrar el envío."); }
+      } catch (e) { console.error(e); alert("Error al registrar el envío: " + motivoError(e)); }
     }
 
-    // ============ CASO B: efectivo por correo, ambos sentidos ============
+    // ============ CASO B ============
     async function registrarEnvioB(quien) {
-      const code = document.getElementById(quien === 'comprador' ? 'trackingB1' : 'trackingB2').value;
+      const code = document.getElementById(quien === 'comprador' ? 'trackingB1' : 'trackingB2').value.trim();
       if (!code) { alert("Ingresá el código de correo."); return; }
       const c = getEscrowContract(); if (!c) return;
       try {
@@ -653,9 +683,10 @@
         alert("Despacho de " + quien + " registrado en el contrato.");
       } catch (e) {
         console.error(e);
-        alert("No se pudo registrar el despacho: " + motivoError(e) + "\n\nCada parte registra el suyo desde su propia billetera.");
+        alert("No se pudo registrar el despacho: " + motivoError(e));
       }
     }
+
     async function confirmarAmbosB() {
       const ok = await confirmarRecepcionOnChain();
       if (ok) document.getElementById('dotB3').classList.add('done');
@@ -668,19 +699,69 @@
       new QRCode(el, { text: texto, width: 140, height: 140, colorDark:"#101B2D", colorLight:"#ffffff" });
     }
 
-    // ============ CASO C: firma presencial (reutiliza setupFirma ya definida arriba) ============
-    setupFirma('firmaCanvas1'); setupFirma('firmaCanvas2');
+    // ============ CASO C: FIRMA PRESENCIAL ============
+    function setupFirma(canvasId) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let dibujando = false;
+
+      const getPos = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+          x: (clientX - rect.left) * scaleX,
+          y: (clientY - rect.top) * scaleY
+        };
+      };
+
+      const start = (e) => {
+        e.preventDefault();
+        dibujando = true;
+        const pos = getPos(e);
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+      };
+
+      const move = (e) => {
+        if (!dibujando) return;
+        e.preventDefault();
+        const pos = getPos(e);
+        ctx.lineWidth = 2.2;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = '#16264A';
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+      };
+
+      const stop = () => {
+        dibujando = false;
+      };
+
+      canvas.addEventListener('mousedown', start);
+      canvas.addEventListener('mousemove', move);
+      window.addEventListener('mouseup', stop);
+
+      canvas.addEventListener('touchstart', start, { passive: false });
+      canvas.addEventListener('touchmove', move, { passive: false });
+      window.addEventListener('touchend', stop);
+    }
+
+    setupFirma('firmaCanvas1');
+    setupFirma('firmaCanvas2');
+
     function limpiarFirma(n) {
       const canvas = document.getElementById('firmaCanvas'+n);
       canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
     }
+
     async function cerrarTratoC() {
       const lugar = document.getElementById('lugarC').value.trim();
       const fecha = document.getElementById('fechaC').value;
       if (!lugar || !fecha) { alert("Completá lugar y fecha del encuentro."); return; }
-      // El hash sale de los términos acordados: así ambas partes, desde su propia
-      // billetera, generan exactamente el mismo valor. La transacción firmada por
-      // cada billetera es la firma de cada parte.
       const hashPlanilla = ethers.utils.id(getTratoId() + "|" + lugar + "|" + fecha);
       const c = getEscrowContract(); if (!c) return;
       try {
@@ -691,7 +772,7 @@
           document.getElementById('seal').classList.add('stamped');
           document.getElementById('sealText').classList.remove('hidden');
         } else {
-          alert("Tu firma quedó registrada. Falta la firma de la otra parte, desde su billetera y con el mismo lugar y fecha. La garantía se libera cuando firmen las dos.");
+          alert("Tu firma quedó registrada. Falta la firma de la otra parte, desde su billetera y con el mismo lugar y fecha.");
         }
       } catch (e) {
         console.error(e);
