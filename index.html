@@ -134,40 +134,31 @@
       </p>
     </div>
 
-    <!-- DECLARACIÓN JURADA (SOLO TILDE DE ACEPTACIÓN) -->
-    <div id="cardDeclaracion" class="card p-5 sm:p-6">
-      <h2 class="text-base font-semibold text-zinc-900 mb-1">Declaración jurada</h2>
-      <p class="text-xs text-zinc-500 mb-3">Revisá el texto y tildá el recuadro para aceptarla.</p>
-      <div id="textoDeclaracion" class="text-xs leading-relaxed text-zinc-700 bg-zinc-50 border border-zinc-200 rounded-lg p-3 mb-3" style="white-space:pre-line;"></div>
-      <button onclick="cargarDatosKyc()" class="btn-ghost w-full py-2.5 rounded-md text-xs font-semibold mb-3">
-        Cargar mis datos verificados (firma gratuita en tu billetera)
-      </button>
-      <label class="flex items-center gap-2.5 cursor-pointer p-3 rounded-lg border border-zinc-200 hover:bg-zinc-50 transition-colors">
-        <input type="checkbox" id="declAcepto" onchange="actualizarBotonCrear()" class="h-4 w-4 accent-brand-blue flex-shrink-0">
-        <span class="text-xs font-semibold text-zinc-800">Acepto esta declaración jurada.</span>
-      </label>
-    </div>
-
-    <!-- DATOS DEL TRATO -->
+    <!-- 1. DATOS DEL TRATO Y MONTO DE GARANTÍA (OBLIGATORIO ANTES DE LA DECLARACIÓN JURADA) -->
     <div class="card p-5 sm:p-6">
       <div class="flex items-center justify-between gap-2 mb-1">
-        <h2 class="text-base font-semibold text-zinc-900">Datos del trato</h2>
+        <h2 class="text-base font-semibold text-zinc-900">1. Datos del trato y garantía obligatoria</h2>
         <span class="text-[11px] font-medium px-2 py-0.5 rounded bg-zinc-100 text-zinc-600">
           Custodia activa · <span id="resumenContrato" class="font-mono">0x249d...464B</span>
         </span>
       </div>
-      <p class="text-xs text-zinc-500 mb-4">Completá los datos esenciales antes de firmar el trato.</p>
+      <p class="text-xs text-zinc-500 mb-4">
+        Completá los datos y bloqueá el monto de garantía en el contrato para habilitar la declaración jurada.
+      </p>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <span class="micro-label">Código del trato (corto o ID)</span>
-          <input type="text" id="tratoId" placeholder="Ej: TRATO-101" oninput="actualizarBotonCrear()" class="field">
-          <span class="text-[11px] text-zinc-400 mt-1 block">Se convierte solo al formato del contrato.</span>
+          <span class="micro-label">Código del trato (automático)</span>
+          <div class="flex gap-2">
+            <input type="text" id="tratoId" readonly oninput="actualizarEstadoGarantiaYDeclaracion()" class="field font-mono bg-zinc-50 text-zinc-800">
+            <button type="button" onclick="generarSiguienteCodigoTrato()" class="btn-ghost px-3 rounded-md text-xs font-semibold flex-shrink-0" title="Generar siguiente número">Nuevo #</button>
+          </div>
+          <span class="text-[11px] text-zinc-400 mt-1 block">Se genera automáticamente en orden correlativo (TRATO-1, TRATO-2, ...).</span>
         </div>
 
         <div>
           <span class="micro-label">Wallet de la contraparte (0x...)</span>
-          <input type="text" id="buyerAddress" placeholder="Ej: 0xAbC...123" class="field font-mono">
+          <input type="text" id="buyerAddress" placeholder="Ej: 0xAbC...123" oninput="actualizarEstadoGarantiaYDeclaracion()" class="field font-mono">
           <span class="text-[11px] text-zinc-400 mt-1 block">Dirección EVM requerida por el contrato para la otra parte.</span>
         </div>
 
@@ -184,39 +175,39 @@
         </div>
 
         <div>
-          <span class="micro-label">Token de garantía ($ Dólar)</span>
+          <span class="micro-label">Token de garantía (USDT / USDC)</span>
           <div class="relative">
-            <span class="text-sm font-bold text-emerald-700 absolute left-3.5 top-1/2 -translate-y-1/2 select-none">$</span>
-            <select id="tokenPreset" onchange="sincronizarTokenPreset()" class="field font-medium pl-8">
-              <option value="0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238" data-decimals="6" selected>$ Dólar digital (USDC)</option>
-              <option value="0x7169D38820dfd117C3FA1f22a697dba58d90BA06" data-decimals="6">$ Dólar digital (USDT)</option>
-              <option value="custom" data-decimals="6">$ Dólar / Token personalizado...</option>
+            <span class="text-sm font-bold text-emerald-700 absolute left-3.5 top-1/2 -translate-y-1/2 select-none">💵</span>
+            <select id="tokenPreset" onchange="sincronizarTokenPreset()" class="field font-medium pl-9">
+              <option value="0x7169D38820dfd117C3FA1f22a697dba58d90BA06" data-decimals="6" selected>USDT (Dólar digital)</option>
+              <option value="0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238" data-decimals="6">USDC (Dólar digital)</option>
+              <option value="custom" data-decimals="6">Token personalizado (USDT/USDC)...</option>
             </select>
           </div>
           <div id="tokenCustomWrap" class="hidden mt-2">
-            <input type="text" id="tokenAddress" value="0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238" placeholder="Dirección del token 0x..." class="field font-mono text-xs">
+            <input type="text" id="tokenAddress" value="0x7169D38820dfd117C3FA1f22a697dba58d90BA06" placeholder="Dirección del token 0x..." class="field font-mono text-xs">
           </div>
           <input type="hidden" id="tokenDecimals" value="6">
         </div>
 
         <div>
-          <span class="micro-label">Monto de garantía ($ respaldo)</span>
+          <span class="micro-label">Monto de garantía (obligatorio · USDT/USDC)</span>
           <div class="relative">
-            <span class="text-sm font-bold text-emerald-700 absolute left-3.5 top-1/2 -translate-y-1/2 select-none">$</span>
-            <input type="text" id="amount" inputmode="decimal" placeholder="Ej: 100" class="field font-mono pl-8">
+            <span class="text-sm font-bold text-emerald-700 absolute left-3.5 top-1/2 -translate-y-1/2 select-none">💵</span>
+            <input type="text" id="amount" inputmode="decimal" placeholder="Ej: 100" oninput="actualizarEstadoGarantiaYDeclaracion()" class="field font-mono pl-9">
           </div>
-          <span class="text-[11px] text-zinc-500 mt-1 block">Referencia en $ del respaldo custodiado en el trato.</span>
+          <span class="text-[11px] text-zinc-500 mt-1 block">Obligatorio: bloqueá el mismo monto (ej. 100) en USDT o USDC antes de aceptar la declaración jurada.</span>
         </div>
 
         <div>
           <span class="micro-label">Plazo en días (0 = en el momento)</span>
-          <input type="number" id="days" min="0" step="1" oninput="actualizarBotonCrear()" placeholder="Ej: 0 (en el acto) o días" class="field font-mono">
+          <input type="number" id="days" min="0" step="1" oninput="actualizarEstadoGarantiaYDeclaracion()" placeholder="Ej: 0 (en el acto) o días" class="field font-mono">
         </div>
 
         <div class="sm:col-span-2 border border-zinc-200 rounded-lg p-3.5 bg-zinc-50 space-y-3">
           <div class="flex items-center justify-between gap-2">
             <span class="text-xs font-semibold text-zinc-800">Datos de pago / cobro local (opcional · Argentina)</span>
-            <span class="text-[11px] text-zinc-500">Alias · CBU · CVU · Banco o billetera</span>
+            <span class="text-[11px] text-zinc-500">Alias · CBU · CBU USD · Banco · Billetera</span>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
@@ -224,8 +215,16 @@
               <input type="text" id="datoLocalCuenta" placeholder="Ej: mi.alias.mp o 22 dígitos CBU/CVU" class="field">
             </div>
             <div>
-              <span class="micro-label">Banco o billetera</span>
-              <input type="text" id="datoLocalEntidad" placeholder="Ej: Mercado Pago, Brubank, Lemon, Galicia" class="field">
+              <span class="micro-label">CBU en dólares (CBU USD)</span>
+              <input type="text" id="datoLocalCbuUsd" placeholder="Ej: 22 dígitos CBU en USD" class="field font-mono">
+            </div>
+            <div>
+              <span class="micro-label">Nombre del banco</span>
+              <input type="text" id="datoLocalBanco" placeholder="Ej: Galicia, Santander, BBVA, Brubank" class="field">
+            </div>
+            <div>
+              <span class="micro-label">Billetera desde la que transferís</span>
+              <input type="text" id="datoLocalBilletera" placeholder="Ej: Mercado Pago, Lemon, Belo, Nexo" class="field">
             </div>
           </div>
         </div>
@@ -233,25 +232,25 @@
         <div>
           <span class="micro-label">Lo que ofrezco</span>
           <div class="flex flex-wrap gap-1.5 mb-2">
-            <button type="button" onclick="aplicarSimbolo('activoOfrecido', '$ USD')" class="sym-chip">$ USD</button>
+            <button type="button" onclick="aplicarSimbolo('activoOfrecido', '💵 USD')" class="sym-chip">💵 USD</button>
             <button type="button" onclick="aplicarSimbolo('activoOfrecido', '$ ARS')" class="sym-chip">$ ARS</button>
             <button type="button" onclick="aplicarSimbolo('activoOfrecido', '$ CLP')" class="sym-chip">$ CLP</button>
-            <button type="button" onclick="aplicarSimbolo('activoOfrecido', '💵 USD')" class="sym-chip">💵 USD</button>
+            <button type="button" onclick="aplicarSimbolo('activoOfrecido', '🪙 USDT')" class="sym-chip">🪙 USDT</button>
             <button type="button" onclick="aplicarSimbolo('activoOfrecido', '🪙 USDC')" class="sym-chip">🪙 USDC</button>
           </div>
-          <input type="text" id="activoOfrecido" placeholder="Ej: $ USD 100 o $ CLP 500.000" class="field">
+          <input type="text" id="activoOfrecido" placeholder="Ej: 💵 USD $100" class="field">
         </div>
 
         <div>
           <span class="micro-label">Lo que pido a cambio</span>
           <div class="flex flex-wrap gap-1.5 mb-2">
-            <button type="button" onclick="aplicarSimbolo('activoSolicitado', '$ USD')" class="sym-chip">$ USD</button>
+            <button type="button" onclick="aplicarSimbolo('activoSolicitado', '💵 USD')" class="sym-chip">💵 USD</button>
             <button type="button" onclick="aplicarSimbolo('activoSolicitado', '$ ARS')" class="sym-chip">$ ARS</button>
             <button type="button" onclick="aplicarSimbolo('activoSolicitado', '$ CLP')" class="sym-chip">$ CLP</button>
-            <button type="button" onclick="aplicarSimbolo('activoSolicitado', '💵 USD')" class="sym-chip">💵 USD</button>
+            <button type="button" onclick="aplicarSimbolo('activoSolicitado', '🪙 USDT')" class="sym-chip">🪙 USDT</button>
             <button type="button" onclick="aplicarSimbolo('activoSolicitado', '🪙 USDC')" class="sym-chip">🪙 USDC</button>
           </div>
-          <input type="text" id="activoSolicitado" placeholder="Ej: 🪙 USDC 100 o $ ARS 620.000" class="field">
+          <input type="text" id="activoSolicitado" placeholder="Ej: 🪙 USDT 100" class="field">
         </div>
       </div>
 
@@ -264,8 +263,29 @@
         </div>
       </details>
 
-      <button id="btnCrearTrato" onclick="crearTrato()" class="btn-primary w-full mt-5 py-3.5 rounded-md text-sm font-semibold shadow-sm">
-        Verificar, bloquear garantía ($) y firmar trato
+      <button id="btnBloquearGarantia" onclick="bloquearGarantiaEnContrato()" class="btn-primary w-full mt-5 py-3.5 rounded-md text-sm font-semibold shadow-sm">
+        Bloquear monto de garantía en el contrato
+      </button>
+      <p id="estadoGarantiaBloqueada" class="text-xs mt-2.5 font-medium text-zinc-600">
+        Garantía pendiente: ingresá un monto mayor a 0 y bloqueala para habilitar la declaración jurada.
+      </p>
+    </div>
+
+    <!-- 2. DECLARACIÓN JURADA (HABILITADA TRAS BLOQUEAR EL MONTO DE GARANTÍA Y KYC) -->
+    <div id="cardDeclaracion" class="card p-5 sm:p-6">
+      <h2 class="text-base font-semibold text-zinc-900 mb-1">2. Declaración jurada</h2>
+      <p class="text-xs text-zinc-500 mb-3">Revisá el texto y tildá el recuadro para aceptarla.</p>
+      <div id="textoDeclaracion" class="text-xs leading-relaxed text-zinc-700 bg-zinc-50 border border-zinc-200 rounded-lg p-3 mb-3" style="white-space:pre-line;"></div>
+      <button onclick="cargarDatosKyc()" class="btn-ghost w-full py-2.5 rounded-md text-xs font-semibold mb-3">
+        Cargar mis datos verificados (firma gratuita en tu billetera)
+      </button>
+      <label class="flex items-center gap-2.5 cursor-pointer p-3 rounded-lg border border-zinc-200 hover:bg-zinc-50 transition-colors">
+        <input type="checkbox" id="declAcepto" onchange="actualizarBotonCrear()" class="h-4 w-4 accent-brand-blue flex-shrink-0">
+        <span class="text-xs font-semibold text-zinc-800">Acepto esta declaración jurada.</span>
+      </label>
+
+      <button id="btnCrearTrato" onclick="crearTrato()" class="btn-primary w-full mt-4 py-3.5 rounded-md text-sm font-semibold shadow-sm">
+        Confirmar declaración jurada y firmar trato
       </button>
     </div>
 
@@ -434,12 +454,72 @@
     const CONTRATO_POR_DEFECTO = "0x249dC2f1DD175B4B6895F5ff9ed655a4E0e0464B";
 
     let kycOk = false;
-    function aplicarBloqueoKyc() {
+    let garantiaBloqueada = false;
+    let montoBloqueadoEnContrato = "";
+
+    function inicializarCodigoCorrelativo() {
+      const el = document.getElementById('tratoId');
+      if (!el.value.trim()) {
+        const ultimo = parseInt(localStorage.getItem('tratoHecho_ultimoNumero') || '0', 10);
+        const siguiente = ultimo + 1;
+        el.value = "TRATO-" + siguiente;
+      }
+    }
+
+    function generarSiguienteCodigoTrato() {
+      const ultimo = parseInt(localStorage.getItem('tratoHecho_ultimoNumero') || '0', 10);
+      const siguiente = ultimo + 1;
+      localStorage.setItem('tratoHecho_ultimoNumero', String(siguiente));
+      document.getElementById('tratoId').value = "TRATO-" + siguiente;
+      garantiaBloqueada = false;
+      montoBloqueadoEnContrato = "";
+      actualizarEstadoGarantiaYDeclaracion();
+    }
+
+    function validarMontoGarantiaActual() {
+      const raw = (document.getElementById("amount").value || "").trim().replace(",", ".");
+      const dec = parseInt(document.getElementById("tokenDecimals").value || "6", 10);
+      if (!raw) return { ok: false, montoBN: null, texto: "" };
+      try {
+        const bn = ethers.utils.parseUnits(raw, dec);
+        if (bn.lte(0)) return { ok: false, montoBN: null, texto: raw };
+        return { ok: true, montoBN: bn, texto: raw };
+      } catch (_) {
+        return { ok: false, montoBN: null, texto: raw };
+      }
+    }
+
+    function actualizarEstadoGarantiaYDeclaracion() {
+      const estadoEl = document.getElementById('estadoGarantiaBloqueada');
+      const val = validarMontoGarantiaActual();
+
+      if (garantiaBloqueada && (!val.ok || val.texto !== montoBloqueadoEnContrato)) {
+        garantiaBloqueada = false;
+        montoBloqueadoEnContrato = "";
+      }
+
+      if (garantiaBloqueada) {
+        estadoEl.textContent = "Garantía bloqueada en el contrato: " + montoBloqueadoEnContrato + " (obligatoria cumplida). Declaración jurada habilitada.";
+        estadoEl.style.color = "#15803D";
+      } else if (val.ok) {
+        estadoEl.textContent = "Monto listo (" + val.texto + "): hacé clic en 'Bloquear monto de garantía en el contrato' para habilitar la declaración jurada.";
+        estadoEl.style.color = "#1D4ED8";
+      } else {
+        estadoEl.textContent = "Garantía obligatoria: ingresá un monto mayor a 0 y bloquealo en el contrato antes de aceptar la declaración jurada.";
+        estadoEl.style.color = "#B45309";
+      }
+
+      aplicarBloqueoDeclaracion();
+    }
+
+    function aplicarBloqueoDeclaracion() {
       const card = document.getElementById('cardDeclaracion');
       const aviso = document.getElementById('avisoKyc');
-      card.style.opacity = kycOk ? '1' : '0.45';
-      card.style.pointerEvents = kycOk ? 'auto' : 'none';
-      if (!kycOk) {
+      const habilitado = Boolean(kycOk && garantiaBloqueada);
+
+      card.style.opacity = habilitado ? '1' : '0.45';
+      card.style.pointerEvents = habilitado ? 'auto' : 'none';
+      if (!habilitado) {
         document.getElementById('declAcepto').checked = false;
       }
       actualizarBotonCrear();
@@ -480,6 +560,7 @@
         customWrap.classList.add('hidden');
         tokenInput.value = sel.value;
       }
+      actualizarEstadoGarantiaYDeclaracion();
     }
 
     function normalizarTratoId(raw) {
@@ -524,31 +605,38 @@
       return new ethers.Contract(addr, abiEscrow, signer);
     }
 
-    async function crearTrato() {
-      if (!kycOk) { alert("Verificación obligatoria: completá y comprobá tu identidad (DNI + selfie) antes de firmar."); return; }
-      if (!document.getElementById('declAcepto').checked) { alert("Tildá el casillero para aceptar la declaración jurada."); return; }
+    async function bloquearGarantiaEnContrato() {
+      if (!kycOk) {
+        alert("Primero completá y comprobá tu verificación de identidad (DNI + selfie).");
+        return;
+      }
       const tratoIdBytes32 = getTratoId();
       const buyerAddr = document.getElementById("buyerAddress").value.trim();
       const tokenAddr = document.getElementById("tokenAddress").value.trim();
-      const amountRaw = document.getElementById("amount").value.trim().replace(",", ".");
+      const val = validarMontoGarantiaActual();
       const daysRaw = document.getElementById("days").value.trim();
+
       const redEconomica = document.getElementById("redEconomica").value;
       const datoLocalCuenta = document.getElementById("datoLocalCuenta").value.trim();
-      const datoLocalEntidad = document.getElementById("datoLocalEntidad").value.trim();
+      const datoLocalCbuUsd = document.getElementById("datoLocalCbuUsd").value.trim();
+      const datoLocalBanco = document.getElementById("datoLocalBanco").value.trim();
+      const datoLocalBilletera = document.getElementById("datoLocalBilletera").value.trim();
       const ofrecidoBase = document.getElementById("activoOfrecido").value.trim();
       const solicitadoBase = document.getElementById("activoSolicitado").value.trim();
 
       const extraLocal = [
         redEconomica ? "Red: " + redEconomica : "",
-        datoLocalCuenta ? "Cuenta: " + datoLocalCuenta : "",
-        datoLocalEntidad ? "Entidad: " + datoLocalEntidad : ""
+        datoLocalCuenta ? "Alias/CBU/CVU: " + datoLocalCuenta : "",
+        datoLocalCbuUsd ? "CBU USD: " + datoLocalCbuUsd : "",
+        datoLocalBanco ? "Banco: " + datoLocalBanco : "",
+        datoLocalBilletera ? "Billetera: " + datoLocalBilletera : ""
       ].filter(Boolean).join(" | ");
 
       const ofrecido = extraLocal ? (ofrecidoBase ? ofrecidoBase + " (" + extraLocal + ")" : extraLocal) : ofrecidoBase;
       const solicitado = solicitadoBase;
 
-      if (!tratoIdBytes32 || !buyerAddr || !tokenAddr || !amountRaw) {
-        alert("Completá el código del trato, la contraparte, el token ($) y el monto ($).");
+      if (!tratoIdBytes32 || !buyerAddr || !tokenAddr || !val.ok) {
+        alert("Completá la contraparte (0x...), el token y un monto de garantía obligatorio mayor a 0.");
         return;
       }
       if (!ethers.utils.isAddress(buyerAddr) || !ethers.utils.isAddress(tokenAddr)) {
@@ -561,17 +649,6 @@
         return;
       }
 
-      const decimals = parseInt(document.getElementById("tokenDecimals").value || "6", 10);
-      let montoBN;
-      try {
-        montoBN = ethers.utils.parseUnits(amountRaw, decimals);
-        if (montoBN.lte(0)) throw new Error("Monto mayor a 0");
-      } catch (_) {
-        alert("Ingresá un monto válido en $ mayor a 0.");
-        return;
-      }
-
-      const days = parseInt(daysRaw, 10);
       const c = getEscrowContract();
       if (!c) return;
 
@@ -587,30 +664,75 @@
         ], signer);
 
         const permitido = await erc20.allowance(userAddress, c.address);
-        if (permitido.lt(montoBN)) {
-          alert("Paso 1 de 2: autorizá la garantía de $" + amountRaw + " en tu billetera.");
-          const txA = await erc20.approve(c.address, montoBN);
+        if (permitido.lt(val.montoBN)) {
+          alert("Paso 1 de 2: aprobá el monto de garantía (" + val.texto + ") en tu billetera.");
+          const txA = await erc20.approve(c.address, val.montoBN);
           await txA.wait();
         }
 
-        alert("Paso 2 de 2: confirmá en tu billetera para bloquear $" + amountRaw + " y firmar el trato.");
+        alert("Paso 2 de 2: confirmá en tu billetera para bloquear " + val.texto + " en el contrato.");
         const tx = await c.crearYGarantizarTrato({
           tratoId: tratoIdBytes32,
           comprador: buyerAddr,
           tokenGarantia: tokenAddr,
-          montoGarantia: montoBN,
-          diasPlazo: days,
+          montoGarantia: val.montoBN,
+          diasPlazo: parseInt(daysRaw, 10),
           tipo: casoActual,
           activoOfrecido: ofrecido,
           activoSolicitado: solicitado
         });
         await tx.wait();
 
-        await registrarDeclaracion(tratoIdBytes32, extraLocal);
-        alert("Listo: garantía de $" + amountRaw + " bloqueada, declaración aceptada y trato firmado.");
+        const rawCode = document.getElementById('tratoId').value.trim();
+        const matchNum = rawCode.match(/(\d+)$/);
+        if (matchNum) {
+          const numActual = parseInt(matchNum[1], 10);
+          const ultimoGuardado = parseInt(localStorage.getItem('tratoHecho_ultimoNumero') || '0', 10);
+          if (numActual > ultimoGuardado) {
+            localStorage.setItem('tratoHecho_ultimoNumero', String(numActual));
+          }
+        }
+
+        garantiaBloqueada = true;
+        montoBloqueadoEnContrato = val.texto;
+        actualizarEstadoGarantiaYDeclaracion();
+        alert("Monto de garantía (" + val.texto + ") bloqueado en el contrato. Ya podés aceptar la declaración jurada.");
       } catch (e) {
         console.error(e);
-        alert("No se pudo crear el trato: " + motivoError(e));
+        alert("No se pudo bloquear el monto de garantía: " + motivoError(e));
+      }
+    }
+
+    async function crearTrato() {
+      if (!kycOk) { alert("Verificación obligatoria: completá y comprobá tu identidad (DNI + selfie) antes de firmar."); return; }
+      if (!garantiaBloqueada) { alert("Primero bloqueá el monto de garantía obligatorio en el contrato para habilitar la declaración jurada."); return; }
+      if (!document.getElementById('declAcepto').checked) { alert("Tildá el casillero para aceptar la declaración jurada."); return; }
+
+      const tratoIdBytes32 = getTratoId();
+      if (!tratoIdBytes32) {
+        alert("Falta el código del trato.");
+        return;
+      }
+
+      const redEconomica = document.getElementById("redEconomica").value;
+      const datoLocalCuenta = document.getElementById("datoLocalCuenta").value.trim();
+      const datoLocalCbuUsd = document.getElementById("datoLocalCbuUsd").value.trim();
+      const datoLocalBanco = document.getElementById("datoLocalBanco").value.trim();
+      const datoLocalBilletera = document.getElementById("datoLocalBilletera").value.trim();
+      const extraLocal = [
+        redEconomica ? "Red: " + redEconomica : "",
+        datoLocalCuenta ? "Alias/CBU/CVU: " + datoLocalCuenta : "",
+        datoLocalCbuUsd ? "CBU USD: " + datoLocalCbuUsd : "",
+        datoLocalBanco ? "Banco: " + datoLocalBanco : "",
+        datoLocalBilletera ? "Billetera: " + datoLocalBilletera : ""
+      ].filter(Boolean).join(" | ");
+
+      try {
+        await registrarDeclaracion(tratoIdBytes32, extraLocal);
+        alert("Declaración jurada aceptada, registrada y trato listo con garantía bloqueada (" + montoBloqueadoEnContrato + ").");
+      } catch (e) {
+        console.error(e);
+        alert("No se pudo registrar la declaración jurada: " + motivoError(e));
       }
     }
 
@@ -659,7 +781,7 @@
         const el = document.getElementById('kycStatus');
         el.innerText = verificado ? "verificado ✓" : "sin verificar";
         el.className = "font-mono text-xs px-2.5 py-1 rounded " + (verificado ? "bg-emerald-600 text-white" : "bg-zinc-100 text-zinc-600");
-        aplicarBloqueoKyc();
+        aplicarBloqueoDeclaracion();
       } catch (e) {
         console.error(e);
         if (silencioso !== true) alert("No se pudo comprobar tu verificación: " + motivoError(e));
@@ -696,7 +818,7 @@
     function actualizarBotonCrear() {
       const acepto = document.getElementById('declAcepto').checked;
       const tieneId = !!getTratoId();
-      document.getElementById('btnCrearTrato').disabled = !(kycOk && acepto && esPlazoValido() && tieneId);
+      document.getElementById('btnCrearTrato').disabled = !(kycOk && garantiaBloqueada && acepto && esPlazoValido() && tieneId);
     }
 
     async function cargarDatosKyc() {
@@ -728,7 +850,7 @@ Fecha: " + new Date().toISOString();
 
     async function registrarDeclaracion(tratoId, extraLocal = "") {
       const fecha = new Date().toISOString();
-      const cadena = textoDeclaracionPlano() + "|" + userAddress + "|" + tratoId + "|" + extraLocal + "|" + (datosKyc ? datosKyc.sessionId : "") + "|" + fecha;
+      const cadena = textoDeclaracionPlano() + "|" + userAddress + "|" + tratoId + "|garantia:" + montoBloqueadoEnContrato + "|" + extraLocal + "|" + (datosKyc ? datosKyc.sessionId : "") + "|" + fecha;
       const hash = ethers.utils.id(cadena);
       const c = getEscrowContract(); if (!c) return;
       const tx = await c.registrarDeclaracionJurada(tratoId, hash);
@@ -757,11 +879,12 @@ Registro base:
     }
 
     // ---- Inicio ----
+    inicializarCodigoCorrelativo();
     renderDeclaracion();
     document.getElementById('contractAddress').value = CONTRATO_POR_DEFECTO;
     actualizarResumenContrato();
     sincronizarTokenPreset();
-    aplicarBloqueoKyc();
+    actualizarEstadoGarantiaYDeclaracion();
     if (window.ethereum) { window.ethereum.on('accountsChanged', () => location.reload()); }
 
     // ============ CASO A ============
