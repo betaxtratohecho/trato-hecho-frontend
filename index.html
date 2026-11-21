@@ -68,7 +68,6 @@
 </head>
 <body class="min-h-screen">
 
-  <!-- ENCABEZADO CON LOGO ESCUDO + CHECK -->
   <header class="sticky top-0 z-50 shadow-sm bg-brand-yellow">
     <div class="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between">
       <div class="flex items-center gap-2.5">
@@ -91,7 +90,6 @@
 
   <main class="max-w-2xl mx-auto px-4 py-6 space-y-5">
 
-    <!-- CÓMO FUNCIONA -->
     <div class="card p-4">
       <p class="text-xs leading-relaxed text-zinc-600">
         Dos personas, dos monedas, dos ciudades. Una deja su garantía en custodia dentro del contrato, la otra hace su parte,
@@ -100,7 +98,6 @@
       </p>
     </div>
 
-    <!-- KYC (DNI + SELFIE — OBLIGATORIO ANTES DE FIRMAR) -->
     <div class="card p-5 sm:p-6">
       <div class="flex items-start justify-between gap-3 mb-1">
         <h1 class="text-base font-semibold text-zinc-900">Verificación de identidad (KYC)</h1>
@@ -134,7 +131,6 @@
       </p>
     </div>
 
-    <!-- 1. DATOS DEL TRATO Y MONTO DE GARANTÍA (OBLIGATORIO ANTES DE LA DECLARACIÓN JURADA) -->
     <div class="card p-5 sm:p-6">
       <div class="flex items-center justify-between gap-2 mb-1">
         <h2 class="text-base font-semibold text-zinc-900">1. Datos del trato y garantía obligatoria</h2>
@@ -254,7 +250,6 @@
         </div>
       </div>
 
-      <!-- Ajuste técnico plegable para no mostrar códigos largos de entrada -->
       <details class="mt-4 border border-zinc-200 rounded-lg p-3 bg-zinc-50 text-xs">
         <summary class="cursor-pointer font-medium text-zinc-700 select-none">Ajustes avanzados del contrato (opcional)</summary>
         <div class="mt-3">
@@ -271,7 +266,6 @@
       </p>
     </div>
 
-    <!-- 2. DECLARACIÓN JURADA (HABILITADA TRAS BLOQUEAR EL MONTO DE GARANTÍA Y KYC) -->
     <div id="cardDeclaracion" class="card p-5 sm:p-6">
       <h2 class="text-base font-semibold text-zinc-900 mb-1">2. Declaración jurada</h2>
       <p class="text-xs text-zinc-500 mb-3">Revisá el texto y tildá el recuadro para aceptarla.</p>
@@ -289,7 +283,6 @@
       </button>
     </div>
 
-    <!-- SELECTOR DE CASOS -->
     <div>
       <span class="micro-label mb-2">Cómo se entrega lo pactado</span>
       <div class="grid grid-cols-3 gap-2">
@@ -299,7 +292,6 @@
       </div>
     </div>
 
-    <!-- CASO A: TRANSFERENCIAS Y/O ENVÍOS -->
     <div id="panelA" class="caso-panel card p-5 sm:p-6">
       <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
         <h2 class="text-base font-semibold text-zinc-900">Transferencias y/o envíos</h2>
@@ -355,7 +347,6 @@
       </div>
     </div>
 
-    <!-- CASO B -->
     <div id="panelB" class="caso-panel hidden card p-5 sm:p-6">
       <h2 class="text-base font-semibold text-zinc-900 mb-1">Efectivo por correo, en ambos sentidos</h2>
       <p class="text-xs text-zinc-500 mb-5">Cada parte envía efectivo por correo a la otra, registra su despacho desde su billetera y el comprador confirma la recepción.</p>
@@ -385,7 +376,6 @@
       <button onclick="confirmarAmbosB()" class="btn-primary w-full py-3.5 rounded-md text-sm font-semibold shadow-sm">Comprador confirma recepción → liberar garantía ($)</button>
     </div>
 
-    <!-- CASO C -->
     <div id="panelC" class="caso-panel hidden card p-5 sm:p-6">
       <h2 class="text-base font-semibold text-zinc-900 mb-1">Encuentro presencial</h2>
       <p class="text-xs text-zinc-500 mb-5">Se coordina lugar y hora públicos. Cada parte firma desde su propia billetera con el mismo lugar y fecha.</p>
@@ -414,7 +404,6 @@
       <button onclick="cerrarTratoC()" class="btn-primary w-full py-3.5 rounded-md text-sm font-semibold shadow-sm">Firmar la planilla desde mi billetera</button>
     </div>
 
-    <!-- PROBLEMAS CON EL TRATO -->
     <div class="card p-5 sm:p-6">
       <h2 class="text-base font-semibold text-zinc-900 mb-1">Estado y problemas del trato</h2>
       <p class="text-xs text-zinc-500 mb-4">Consultá cómo está el trato, abrí una disputa si algo salió mal o reclamá si venció el plazo.</p>
@@ -428,7 +417,6 @@
       </div>
     </div>
 
-    <!-- SELLO -->
     <div class="flex flex-col items-center" id="sealWrap">
       <div class="seal" id="seal">
         <span class="text-white text-[10px] font-bold text-center leading-tight">TRATO<br>HECHO</span>
@@ -436,7 +424,6 @@
       <p id="sealText" class="text-xs text-zinc-500 mt-2 hidden">Garantía liberada ($) · registrado en el contrato</p>
     </div>
 
-    <!-- MARCO LEGAL -->
     <div class="card p-4 flex items-start gap-2.5">
       <span class="w-2 h-2 rounded-full bg-brand-ok mt-1 flex-shrink-0"></span>
       <p class="text-xs leading-relaxed text-zinc-600">
@@ -615,7 +602,10 @@
     }
 
     async function connectWallet() {
-      if (!window.ethereum) { alert("No se detectó billetera Web3. Instalá MetaMask para continuar."); return; }
+      if (!window.ethereum) {
+        alert("No se detectó billetera Web3. Instalá MetaMask para continuar.");
+        return;
+      }
       try {
         provider = new ethers.providers.Web3Provider(window.ethereum);
         await provider.send("eth_requestAccounts", []);
@@ -628,13 +618,16 @@
         chequearKyc(true);
       } catch (e) {
         console.error(e);
-        alert("Error al conectar la billetera.");
+        alert("Error al conectar la billetera: " + motivoError(e));
       }
     }
 
     function getEscrowContract() {
       const addr = document.getElementById("contractAddress").value.trim();
-      if (!addr || !signer) { alert("Conectá tu billetera y verificá el contrato."); return null; }
+      if (!addr || !signer) {
+        alert("Conectá tu billetera y verificá el contrato.");
+        return null;
+      }
       return new ethers.Contract(addr, abiEscrow, signer);
     }
 
@@ -717,7 +710,7 @@
         await tx.wait();
 
         const rawCode = document.getElementById('tratoId').value.trim();
-        const matchNum = rawCode.match(/(\d+)$/);
+        const matchNum = rawCode.match(/(\\d+)$/);
         if (matchNum) {
           const numActual = parseInt(matchNum[1], 10);
           const ultimoGuardado = parseInt(localStorage.getItem('tratoHecho_ultimoNumero') || '0', 10);
@@ -781,7 +774,6 @@
     setCaso('a');
     setModoCasoA('solo');
 
-    // ============ KYC (DNI + SELFIE) ============
     const DIDIT_SESSION_ENDPOINT = "";
     const DATOS_KYC_ENDPOINT = "";
     let datosKyc = null;
@@ -834,14 +826,10 @@
       } else {
         quien = "Yo, titular de la billetera " + billetera;
       }
-      return quien + ", declaro bajo juramento que:
-" +
-        "1. Verifiqué mi identidad con DNI y selfie, y los datos son verdaderos.
-" +
-        "2. La información de este trato es real y actúo por cuenta propia.
-" +
-        "3. Trato Hecho custodia la garantía ($) y deja constancia, pero no participa del intercambio ni reemplaza a la justicia.
-" +
+      return quien + ", declaro bajo juramento que:\\n" +
+        "1. Verifiqué mi identidad con DNI y selfie, y los datos son verdaderos.\\n" +
+        "2. La información de este trato es real y actúo por cuenta propia.\\n" +
+        "3. Trato Hecho custodia la garantía ($) y deja constancia, pero no participa del intercambio ni reemplaza a la justicia.\\n" +
         "4. Ante incumplimientos, la resolución corresponde ante la justicia y la evidencia registrada sirve de respaldo.";
     }
 
@@ -863,9 +851,7 @@
         return;
       }
       try {
-        const mensaje = "Trato Hecho: ver mis datos de verificación
-Billetera: " + userAddress + "
-Fecha: " + new Date().toISOString();
+        const mensaje = "Trato Hecho: ver mis datos de verificación\\nBilletera: " + userAddress + "\\nFecha: " + new Date().toISOString();
         const firma = await signer.signMessage(mensaje);
         const res = await fetch(DATOS_KYC_ENDPOINT, {
           method: "POST",
@@ -893,26 +879,14 @@ Fecha: " + new Date().toISOString();
     }
 
     function descargarCopiaDeclaracion(tratoId, fecha, hash, cadena) {
-      const contenido = "DECLARACIÓN JURADA — TRATO HECHO
-
-Trato: " + tratoId + "
-Fecha de aceptación: " + fecha + "
-
-" +
-        textoDeclaracionPlano() + "
-
-Respaldo criptográfico (hash): " + hash + "
-
-Registro base:
-" + cadena + "
-";
+      const contenido = "DECLARACIÓN JURADA — TRATO HECHO\\n\\nTrato: " + tratoId + "\\nFecha de aceptación: " + fecha + "\\n\\n" +
+        textoDeclaracionPlano() + "\\n\\nRespaldo criptográfico (hash): " + hash + "\\n\\nRegistro base:\\n" + cadena + "\\n";
       const url = URL.createObjectURL(new Blob([contenido], { type: "text/plain;charset=utf-8" }));
       const a = document.createElement("a");
       a.href = url; a.download = "declaracion-jurada-" + tratoId.slice(0, 10) + ".txt";
       document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
     }
 
-    // ---- Inicio ----
     inicializarCodigoCorrelativo();
     renderDeclaracion();
     document.getElementById('contractAddress').value = CONTRATO_POR_DEFECTO;
@@ -921,7 +895,6 @@ Registro base:
     actualizarEstadoGarantiaYDeclaracion();
     if (window.ethereum) { window.ethereum.on('accountsChanged', () => location.reload()); }
 
-    // ============ CASO A: TRANSFERENCIAS Y/O ENVÍOS ============
     let stepAState = 0;
     function stepA(n) {
       stepAState = n;
@@ -1013,7 +986,6 @@ Registro base:
       } catch (e) { console.error(e); alert("Error al registrar el envío: " + motivoError(e)); }
     }
 
-    // ============ CASO B ============
     async function registrarEnvioB(quien) {
       const code = document.getElementById(quien === 'comprador' ? 'trackingB1' : 'trackingB2').value.trim();
       if (!code) { alert("Ingresá el código de correo."); return; }
@@ -1041,7 +1013,6 @@ Registro base:
       new QRCode(el, { text: texto, width: 140, height: 140, colorDark:"#101B2D", colorLight:"#ffffff" });
     }
 
-    // ============ CASO C: FIRMA PRESENCIAL ============
     function setupFirma(canvasId) {
       const canvas = document.getElementById(canvasId);
       if (!canvas) return;
